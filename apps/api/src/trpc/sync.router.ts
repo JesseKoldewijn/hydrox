@@ -51,7 +51,17 @@ export class SyncRouter {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
     return observable<z.infer<typeof syncPatchEventSchema>>((emit) => {
       const off = this.sync.onPatches((event) => {
-        emit.next(event);
+        if (event?.type !== "entity.patch" || !event.entityId) return;
+        emit.next({
+          type: "entity.patch",
+          entityType: event.entityType,
+          entityId: event.entityId,
+          version: event.version,
+          fields: event.fields ?? {},
+          deletedAt: event.deletedAt ?? null,
+          updatedAt: new Date(event.updatedAt),
+          updatedById: event.updatedById ?? null,
+        });
       });
       return () => off();
     });

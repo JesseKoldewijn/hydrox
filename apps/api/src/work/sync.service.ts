@@ -1,11 +1,27 @@
 import { Inject, Injectable } from "@nestjs/common";
-import { and, eq, gt, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { mergeFields, toSyncConflict } from "@hydrox/sync";
 import type { SyncOp, SyncPushResult } from "@hydrox/contracts";
 import { issues, syncIdempotency, type HydroxDb } from "@hydrox/db";
 import { DB } from "../db/db.module.js";
 import { SyncBusService } from "../redis/sync-bus.service.js";
 import { WorkService } from "./work.service.js";
+
+function issueFields(row: typeof issues.$inferSelect): Record<string, unknown> {
+  return {
+    projectId: row.projectId,
+    key: row.key,
+    type: row.type,
+    title: row.title,
+    description: row.description,
+    statusId: row.statusId,
+    assigneeId: row.assigneeId,
+    sprintId: row.sprintId,
+    backlogRank: row.backlogRank,
+    storyPoints: row.storyPoints,
+    epicId: row.epicId,
+  };
+}
 
 @Injectable()
 export class SyncService {
@@ -33,8 +49,14 @@ export class SyncService {
         .limit(1);
       if (seen) {
         applied.push(op.id);
+        const cached = seen.result as {
+          merged?: SyncPushResult["merged"][number];
+        } | null;
+        if (cached?.merged) merged.push(cached.merged);
         continue;
       }
+
+      let mergedEntry: SyncPushResult["merged"][number] | undefined;
 
       if (op.entityType === "issue" && op.op === "update") {
         const [current] = await this.db
@@ -71,12 +93,13 @@ export class SyncService {
           });
           if (!update.conflict) {
             applied.push(op.id);
-            merged.push({
+            mergedEntry = {
               opId: op.id,
               entityId: op.entityId,
-              version: result.version,
-              fields: result.fields,
-            });
+              version: update.issue.version,
+              fields: issueFields(update.issue),
+            };
+            merged.push(mergedEntry);
           } else {
             conflicts.push(
               toSyncConflict("issue", op.entityId, [
@@ -93,6 +116,7 @@ export class SyncService {
         }
       } else if (op.entityType === "issue" && op.op === "create" && op.payload) {
         const created = await this.work.createIssue({
+          id: op.entityId,
           projectId: String(op.payload.projectId),
           type: String(op.payload.type ?? "task"),
           title: String(op.payload.title ?? "Untitled"),
@@ -103,15 +127,17 @@ export class SyncService {
           assigneeId: (op.payload.assigneeId as string | null) ?? null,
           sprintId: (op.payload.sprintId as string | null) ?? null,
           storyPoints: (op.payload.storyPoints as number | null) ?? null,
+          backlogRank: (op.payload.backlogRank as string | null) ?? null,
           userId,
         });
         applied.push(op.id);
-        merged.push({
+        mergedEntry = {
           opId: op.id,
           entityId: created.id,
           version: created.version,
-          fields: created as unknown as Record<string, unknown>,
-        });
+          fields: issueFields(created),
+        };
+        merged.push(mergedEntry);
       } else if (op.entityType === "issue" && op.op === "delete") {
         await this.work.softDeleteIssue(op.entityId, userId);
         applied.push(op.id);
@@ -120,7 +146,7 @@ export class SyncService {
       await this.db.insert(syncIdempotency).values({
         idempotencyKey: op.idempotencyKey,
         userId,
-        result: { applied: true },
+        result: { applied: true, merged: mergedEntry },
       });
     }
 
@@ -133,7 +159,6 @@ export class SyncService {
   }
 
   async pull(since: Date | null, projectIds?: string[]) {
-    // Simplified: return issues updated since timestamp
     const rows = await this.db.select().from(issues).where(isNull(issues.deletedAt));
     const filtered = rows.filter((r) => {
       if (projectIds?.length && !projectIds.includes(r.projectId)) return false;
@@ -145,7 +170,7 @@ export class SyncService {
       entityType: "issue" as const,
       entityId: r.id,
       version: r.version,
-      fields: r as unknown as Record<string, unknown>,
+      fields: issueFields(r),
       updatedAt: r.updatedAt,
       updatedById: r.updatedById,
       deletedAt: r.deletedAt,

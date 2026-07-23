@@ -2,6 +2,43 @@ import { applyConflictResolutions } from "@hydrox/sync";
 import { db, type LocalIssue } from "./db";
 import { trpc } from "./trpc";
 
+function toLocalIssue(
+  entityId: string,
+  version: number,
+  fields: Record<string, unknown>,
+  fallback?: Partial<LocalIssue>,
+): LocalIssue {
+  return {
+    id: entityId,
+    projectId: String(fields.projectId ?? fallback?.projectId ?? ""),
+    key: String(fields.key ?? fallback?.key ?? ""),
+    type: String(fields.type ?? fallback?.type ?? "task"),
+    title: String(fields.title ?? fallback?.title ?? ""),
+    description:
+      (fields.description as string | null | undefined) ??
+      fallback?.description ??
+      null,
+    statusId: String(fields.statusId ?? fallback?.statusId ?? ""),
+    assigneeId:
+      (fields.assigneeId as string | null | undefined) ??
+      fallback?.assigneeId ??
+      null,
+    sprintId:
+      (fields.sprintId as string | null | undefined) ??
+      fallback?.sprintId ??
+      null,
+    backlogRank: String(fields.backlogRank ?? fallback?.backlogRank ?? "m"),
+    storyPoints:
+      (fields.storyPoints as number | null | undefined) ??
+      fallback?.storyPoints ??
+      null,
+    version,
+    updatedAt: new Date().toISOString(),
+    deletedAt: null,
+    pending: false,
+  };
+}
+
 export async function upsertLocalIssue(issue: LocalIssue) {
   await db.issues.put(issue);
 }
@@ -43,10 +80,11 @@ export async function createIssueLocally(input: {
       type: input.type,
       title: input.title,
       statusId: input.statusId,
+      backlogRank: issue.backlogRank,
     },
     clientTimestamp: new Date().toISOString(),
   });
-  void flushSyncQueue();
+  await flushSyncQueue();
   return issue;
 }
 
@@ -79,7 +117,7 @@ export async function updateIssueLocally(
     patches,
     clientTimestamp: new Date().toISOString(),
   });
-  void flushSyncQueue();
+  await flushSyncQueue();
 }
 
 export async function flushSyncQueue() {
@@ -109,29 +147,23 @@ export async function flushSyncQueue() {
       conflicts: Array<{
         entityType: string;
         entityId: string;
-        conflicts: LocalIssue extends never ? never : any[];
+        conflicts: any[];
       }>;
     };
 
-    for (const m of result.merged) {
-      const fields = m.fields as Partial<LocalIssue>;
-      await db.issues.put({
-        id: m.entityId,
-        projectId: String(fields.projectId ?? ""),
-        key: String(fields.key ?? "UNKNOWN-0"),
-        type: String(fields.type ?? "task"),
-        title: String(fields.title ?? ""),
-        description: (fields.description as string | null) ?? null,
-        statusId: String(fields.statusId ?? ""),
-        assigneeId: (fields.assigneeId as string | null) ?? null,
-        sprintId: (fields.sprintId as string | null) ?? null,
-        backlogRank: String(fields.backlogRank ?? "m"),
-        storyPoints: (fields.storyPoints as number | null) ?? null,
-        version: m.version,
-        updatedAt: new Date().toISOString(),
-        deletedAt: null,
-        pending: false,
-      });
+    const byOpId = new Map(result.merged.map((m) => [m.opId, m]));
+
+    for (const item of items) {
+      const m = byOpId.get(item.opId);
+      if (!m) continue;
+      const existing = await db.issues.get(item.entityId);
+      // Prefer client entity id (create uses same UUID server-side).
+      if (m.entityId !== item.entityId && existing) {
+        await db.issues.delete(item.entityId);
+      }
+      await db.issues.put(
+        toLocalIssue(m.entityId, m.version, m.fields, existing ?? undefined),
+      );
     }
 
     for (const c of result.conflicts) {
@@ -143,7 +175,12 @@ export async function flushSyncQueue() {
       });
     }
 
-    await db.syncQueue.clear();
+    const applied = new Set(result.applied);
+    for (const item of items) {
+      if (applied.has(item.opId) || byOpId.has(item.opId)) {
+        if (item.id != null) await db.syncQueue.delete(item.id);
+      }
+    }
   } catch (err) {
     console.warn("sync flush failed; will retry", err);
   }
@@ -158,7 +195,7 @@ export async function pullAndSubscribe(projectId: string) {
     entityId: string;
     version: number;
     fields: Record<string, unknown>;
-    deletedAt?: string | null;
+    deletedAt?: string | Date | null;
   }>;
 
   for (const p of patches) {
@@ -166,60 +203,37 @@ export async function pullAndSubscribe(projectId: string) {
       await db.issues.delete(p.entityId);
       continue;
     }
-    const f = p.fields;
-    await db.issues.put({
-      id: p.entityId,
-      projectId: String(f.projectId ?? projectId),
-      key: String(f.key ?? ""),
-      type: String(f.type ?? "task"),
-      title: String(f.title ?? ""),
-      description: (f.description as string | null) ?? null,
-      statusId: String(f.statusId ?? ""),
-      assigneeId: (f.assigneeId as string | null) ?? null,
-      sprintId: (f.sprintId as string | null) ?? null,
-      backlogRank: String(f.backlogRank ?? "m"),
-      storyPoints: (f.storyPoints as number | null) ?? null,
-      version: p.version,
-      updatedAt: new Date().toISOString(),
-      deletedAt: null,
-      pending: false,
-    });
+    await db.issues.put(toLocalIssue(p.entityId, p.version, p.fields));
   }
+
+  // Drain any offline queue after pull.
+  await flushSyncQueue();
 
   try {
     const sub = (trpc as any).sync.onPatch.subscribe(undefined, {
       onData: async (event: any) => {
-        if (event.entityType !== "issue") return;
+        if (!event || event.entityType !== "issue") return;
         if (event.deletedAt) {
           await db.issues.delete(event.entityId);
           return;
         }
-        const f = event.fields ?? {};
         const existing = await db.issues.get(event.entityId);
-        await db.issues.put({
-          id: event.entityId,
-          projectId: String(f.projectId ?? existing?.projectId ?? projectId),
-          key: String(f.key ?? existing?.key ?? ""),
-          type: String(f.type ?? existing?.type ?? "task"),
-          title: String(f.title ?? existing?.title ?? ""),
-          description:
-            (f.description as string | null) ?? existing?.description ?? null,
-          statusId: String(f.statusId ?? existing?.statusId ?? ""),
-          assigneeId:
-            (f.assigneeId as string | null) ?? existing?.assigneeId ?? null,
-          sprintId: (f.sprintId as string | null) ?? existing?.sprintId ?? null,
-          backlogRank: String(f.backlogRank ?? existing?.backlogRank ?? "m"),
-          storyPoints:
-            (f.storyPoints as number | null) ?? existing?.storyPoints ?? null,
-          version: event.version,
-          updatedAt: new Date().toISOString(),
-          deletedAt: null,
-          pending: false,
-        });
+        await db.issues.put(
+          toLocalIssue(
+            event.entityId,
+            event.version,
+            event.fields ?? {},
+            existing ?? { projectId },
+          ),
+        );
+      },
+      onError: (err: unknown) => {
+        console.warn("sync subscription error", err);
       },
     });
     return () => sub.unsubscribe();
-  } catch {
+  } catch (err) {
+    console.warn("sync subscribe failed", err);
     return () => undefined;
   }
 }

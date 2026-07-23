@@ -170,6 +170,7 @@ export class WorkService {
   }
 
   async createIssue(input: {
+    id?: string;
     projectId: string;
     type: string;
     title: string;
@@ -180,6 +181,7 @@ export class WorkService {
     assigneeId?: string | null;
     sprintId?: string | null;
     storyPoints?: number | null;
+    backlogRank?: string | null;
     userId: string;
   }) {
     const project = await this.getProject(input.projectId);
@@ -190,7 +192,7 @@ export class WorkService {
 
     const next = project.issueCounter + 1;
     const key = formatIssueKey(project.key, next);
-    const id = crypto.randomUUID();
+    const id = input.id ?? crypto.randomUUID();
 
     await this.db
       .update(projects)
@@ -203,7 +205,8 @@ export class WorkService {
       .where(and(eq(issues.projectId, input.projectId), isNull(issues.deletedAt)))
       .orderBy(asc(issues.backlogRank))
       .limit(1);
-    const backlogRank = rankBetween(null, existing[0]?.backlogRank ?? null);
+    const backlogRank =
+      input.backlogRank ?? rankBetween(null, existing[0]?.backlogRank ?? null);
 
     await this.db.insert(issues).values({
       id,
@@ -236,8 +239,8 @@ export class WorkService {
       type: "entity.patch",
       entityType: "issue",
       entityId: id,
-      version: 1,
-      fields: row as unknown as Record<string, unknown>,
+      version: row!.version,
+      fields: this.issuePatchFields(row!),
       updatedAt: new Date(),
       updatedById: input.userId,
     });
@@ -275,7 +278,7 @@ export class WorkService {
       entityType: "issue",
       entityId: input.id,
       version: nextVersion,
-      fields: row as unknown as Record<string, unknown>,
+      fields: this.issuePatchFields(row!),
       updatedAt: new Date(),
       updatedById: input.userId,
     });
@@ -616,6 +619,22 @@ export class WorkService {
       entityType,
       entityId,
     });
+  }
+
+  private issuePatchFields(row: typeof issues.$inferSelect): Record<string, unknown> {
+    return {
+      projectId: row.projectId,
+      key: row.key,
+      type: row.type,
+      title: row.title,
+      description: row.description,
+      statusId: row.statusId,
+      assigneeId: row.assigneeId,
+      sprintId: row.sprintId,
+      backlogRank: row.backlogRank,
+      storyPoints: row.storyPoints,
+      epicId: row.epicId,
+    };
   }
 
   private async publishPatch(event: SyncPatchEvent) {

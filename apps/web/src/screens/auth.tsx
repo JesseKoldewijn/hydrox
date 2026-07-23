@@ -12,7 +12,10 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [workos, setWorkos] = useState<{ enabled: boolean; url: string | null } | null>(null);
+  const [workos, setWorkos] = useState<{ enabled: boolean; url: string | null } | null>(
+    null,
+  );
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     void (trpc as any).auth.workosLoginUrl
@@ -24,6 +27,7 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
   async function submit(e: Event) {
     e.preventDefault();
     setError(null);
+    setBusy(true);
     try {
       if (mode === "login") {
         const result = await (trpc as any).auth.login.mutate({ login, password });
@@ -40,77 +44,89 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
       await props.onAuthed();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Auth failed");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <div class="hydrox-shell">
-      <main class="mx-auto flex min-h-screen max-w-md flex-col justify-center gap-6 p-6">
-        <div>
-          <p class="hydrox-brand text-5xl font-bold text-primary">{t("app.name")}</p>
-          <p class="mt-2 text-muted-foreground">{t("app.tagline")}</p>
+    <div class="auth-screen" data-testid="auth-screen">
+      <main class="auth-card">
+        <div class="mb-5">
+          <p class="hydrox-brand text-3xl text-foreground">{t("app.name")}</p>
+          <p class="mt-1 text-sm text-muted-foreground">{t("app.tagline")}</p>
         </div>
-        <form class="flex flex-col gap-3 rounded-lg border border-border bg-card p-5" onSubmit={submit as any}>
+        <form class="flex flex-col gap-3" onSubmit={submit as any} data-testid="auth-form">
           {mode === "register" ? (
             <>
-              <label class="text-sm">
+              <label class="field">
                 {t("auth.displayName")}
                 <input
-                  class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+                  data-testid="auth-display-name"
                   value={displayName}
                   onInput={(e: any) => setDisplayName(e.currentTarget.value)}
                 />
               </label>
-              <label class="text-sm">
+              <label class="field">
                 {t("auth.email")}
                 <input
-                  class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+                  data-testid="auth-email"
                   value={email}
                   onInput={(e: any) => setEmail(e.currentTarget.value)}
                 />
               </label>
-              <label class="text-sm">
+              <label class="field">
                 {t("auth.username")}
                 <input
-                  class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+                  data-testid="auth-username"
                   value={username}
                   onInput={(e: any) => setUsername(e.currentTarget.value)}
                 />
               </label>
             </>
           ) : (
-            <label class="text-sm">
+            <label class="field">
               {t("auth.username")} / {t("auth.email")}
               <input
-                class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+                data-testid="auth-login"
                 value={login}
                 onInput={(e: any) => setLogin(e.currentTarget.value)}
               />
             </label>
           )}
-          <label class="text-sm">
+          <label class="field">
             {t("auth.password")}
             <input
               type="password"
-              class="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+              data-testid="auth-password"
               value={password}
               onInput={(e: any) => setPassword(e.currentTarget.value)}
             />
           </label>
-          {error ? <p class="text-sm text-destructive">{error as string}</p> : null}
-          <button class={buttonVariants.default} type="submit">
+          {error ? (
+            <p class="text-sm text-destructive" data-testid="auth-error">
+              {error as string}
+            </p>
+          ) : null}
+          <button
+            class={buttonVariants.default}
+            type="submit"
+            data-testid="auth-submit"
+            disabled={busy}
+          >
             {mode === "login" ? t("auth.login") : t("auth.register")}
           </button>
         </form>
         <button
-          class={buttonVariants.ghost}
+          class={buttonVariants.ghost + " mt-3 w-full"}
           type="button"
+          data-testid="auth-toggle"
           onClick={() => setMode(mode === "login" ? "register" : "login")}
         >
           {mode === "login" ? t("auth.register") : t("auth.login")}
         </button>
         {workos?.enabled && workos.url ? (
-          <a class={buttonVariants.secondary} href={workos.url}>
+          <a class={buttonVariants.secondary + " mt-2 w-full"} href={workos.url}>
             Continue with WorkOS
           </a>
         ) : null}

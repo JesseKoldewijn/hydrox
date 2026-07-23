@@ -302,7 +302,7 @@ export const issues = pgTable(
     ...softDelete,
   },
   (t) => [
-    uniqueIndex("issues_key_uidx").on(t.key),
+    uniqueIndex("issues_project_key_uidx").on(t.projectId, t.key),
     index("issues_project_idx").on(t.projectId),
     index("issues_sprint_idx").on(t.sprintId),
   ],

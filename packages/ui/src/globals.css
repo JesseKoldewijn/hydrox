@@ -13,39 +13,54 @@
   --color-border: var(--border);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --font-sans: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --font-display: "Fraunces", "Georgia", serif;
-  --radius-md: 0.5rem;
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-panel: var(--panel);
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Manrope", "Segoe UI", sans-serif;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
 }
 
+/* Linear-inspired: compact, cool neutrals, indigo accent on dark-first */
 :root {
-  --background: #f4f7f5;
-  --foreground: #14231c;
-  --primary: #0f6b4c;
-  --primary-foreground: #f5fff9;
-  --secondary: #d7e6de;
-  --secondary-foreground: #14231c;
-  --muted: #e4eee8;
-  --muted-foreground: #5b6f65;
-  --destructive: #b42318;
-  --border: #c9d8cf;
+  --background: #f7f8f9;
+  --foreground: #1a1c20;
+  --primary: #5e6ad2;
+  --primary-foreground: #f8f9ff;
+  --secondary: #eef0f5;
+  --secondary-foreground: #1a1c20;
+  --muted: #e8eaef;
+  --muted-foreground: #6b7280;
+  --destructive: #e5484d;
+  --border: #dde1e8;
   --card: #ffffff;
-  --card-foreground: #14231c;
+  --card-foreground: #1a1c20;
+  --accent: #5e6ad2;
+  --accent-foreground: #f8f9ff;
+  --panel: #ffffff;
+  --sidebar: #f0f1f4;
+  --sidebar-width: 14.5rem;
 }
 
 .dark {
-  --background: #0c1612;
-  --foreground: #e7f2ec;
-  --primary: #3ecf8e;
-  --primary-foreground: #062116;
-  --secondary: #1a2a23;
-  --secondary-foreground: #e7f2ec;
-  --muted: #16211c;
-  --muted-foreground: #9bb0a5;
-  --destructive: #f97066;
-  --border: #24352d;
-  --card: #121c18;
-  --card-foreground: #e7f2ec;
+  --background: #0f1011;
+  --foreground: #ececee;
+  --primary: #7170ff;
+  --primary-foreground: #0b0b12;
+  --secondary: #1c1d21;
+  --secondary-foreground: #ececee;
+  --muted: #18191c;
+  --muted-foreground: #8b8f98;
+  --destructive: #ff6369;
+  --border: #23252a;
+  --card: #151618;
+  --card-foreground: #ececee;
+  --accent: #7170ff;
+  --accent-foreground: #0b0b12;
+  --panel: #151618;
+  --sidebar: #0c0d0e;
 }
 
 * {
@@ -63,4 +78,14 @@ body {
   font-family: var(--font-sans);
   background: var(--background);
   color: var(--foreground);
+  font-size: 13.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
