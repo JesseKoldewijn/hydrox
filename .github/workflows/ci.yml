@@ -55,7 +55,25 @@ jobs:
     needs: validate
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Enable corepack
+        run: corepack enable
+      - name: Install
+        run: yarn install --immutable
       - name: Build API image
         run: docker build -f docker/api.Dockerfile --target runner -t hydrox-api .
       - name: Build web image
         run: docker build -f docker/web.Dockerfile --target runner -t hydrox-web .
+      - name: Stack probe (prod compose)
+        run: yarn test:stack:prod
+        env:
+          DATABASE_URL: postgres://hydrox:hydrox@localhost:5432/hydrox
+          REDIS_URL: redis://localhost:6379
+          S3_ENDPOINT: http://localhost:4566
+          S3_BUCKET: hydrox
+          S3_ACCESS_KEY_ID: test
+          S3_SECRET_ACCESS_KEY: test
+          API_URL: http://127.0.0.1:3001
+          WEB_URL: http://127.0.0.1:8080

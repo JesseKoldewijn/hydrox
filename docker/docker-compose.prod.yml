@@ -13,6 +13,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 5s
 
   redis:
     image: redis:7-alpine
@@ -21,6 +22,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
 
   localstack:
     image: localstack/localstack:4.3
@@ -29,6 +31,16 @@ services:
       DEFAULT_REGION: us-east-1
     volumes:
       - ./localstack-init:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:4566/_localstack/health | grep -q '\"s3\": \"\\(available\\|running\\)\"' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   api:
     build:
@@ -52,6 +64,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 45s
 
   web:
     build:
@@ -61,7 +87,14 @@ services:
     ports:
       - "8080:80"
     depends_on:
-      - api
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 10s
+      timeout: 3s
+      retries: 8
+      start_period: 10s
 
 volumes:
   pgdata:

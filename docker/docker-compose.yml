@@ -15,6 +15,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+      start_period: 5s
 
   redis:
     image: redis:7-alpine
@@ -25,6 +26,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 5s
 
   localstack:
     image: localstack/localstack:4.3
@@ -36,6 +38,16 @@ services:
     volumes:
       - localstack:/var/lib/localstack
       - ./localstack-init:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl -fsS http://localhost:4566/_localstack/health | grep -q '\"s3\": \"\\(available\\|running\\)\"' || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
 
   api:
     build:
@@ -48,7 +60,11 @@ services:
       DATABASE_URL: postgres://hydrox:hydrox@postgres:5432/hydrox
       REDIS_URL: redis://redis:6379
       S3_ENDPOINT: http://localstack:4566
+      S3_BUCKET: hydrox
+      S3_ACCESS_KEY_ID: test
+      S3_SECRET_ACCESS_KEY: test
       WEB_ORIGIN: http://localhost:5173
+      API_PORT: 3001
     ports:
       - "3001:3001"
     volumes:
@@ -60,8 +76,19 @@ services:
       redis:
         condition: service_healthy
       localstack:
-        condition: service_started
-    command: sh -c "yarn workspace @hydrox/db migrate || true; yarn workspace @hydrox/api dev"
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
 
   web:
     build:
@@ -76,8 +103,21 @@ services:
       - ../:/app
       - /app/node_modules
     depends_on:
-      - api
-    command: yarn workspace @hydrox/web dev --host 0.0.0.0
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    command: yarn workspace @hydrox/web dev --host 0.0.0.0 --port 5173
 
 volumes:
   pgdata:

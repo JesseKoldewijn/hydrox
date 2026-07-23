@@ -19,8 +19,14 @@
     "docker:up": "docker compose -f docker/docker-compose.yml up -d",
     "docker:down": "docker compose -f docker/docker-compose.yml down",
     "docker:prod": "docker compose -f docker/docker-compose.prod.yml up -d --build",
+    "probe:stack": "node scripts/probe-stack.mjs",
+    "probe:stack:full": "node scripts/probe-stack.mjs --full",
+    "test:stack": "bash scripts/test-stack.sh",
+    "test:stack:infra": "bash scripts/test-stack.sh infra",
+    "test:stack:full": "bash scripts/test-stack.sh full",
+    "test:stack:prod": "bash scripts/test-stack.sh prod",
     "validate": "yarn lint && yarn typecheck && yarn test",
-    "ci:local": "yarn validate && yarn test:integration"
+    "ci:local": "yarn validate && yarn test:integration && yarn probe:stack"
   },
   "devDependencies": {
     "turbo": "^2.5.4",

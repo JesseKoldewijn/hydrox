@@ -18,6 +18,7 @@ import { JobsModule } from "./jobs/jobs.module.js";
 import { WorkModule } from "./work/work.module.js";
 import { AuthService } from "./auth/auth.service.js";
 import { extractToken, SESSION_COOKIE } from "./trpc/context.js";
+import { HealthController } from "./health/health.controller.js";
 
 function parseCookieHeader(header: unknown): Record<string, string> {
   if (typeof header !== "string" || !header) return {};
@@ -120,5 +121,6 @@ function parseCookieHeader(header: unknown): Record<string, string> {
     NotifyRouter,
     AdminRouter,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}

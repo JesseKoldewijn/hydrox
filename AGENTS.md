@@ -32,11 +32,14 @@ yarn test
 yarn test:integration
 # when touching web UX:
 yarn workspace @hydrox/web test:e2e
-# when touching Docker/infra:
-yarn docker:up && curl -sf http://localhost:3001/trpc/health.ping
+# when touching Docker/infra/health:
+yarn test:stack:infra          # compose + postgres/redis/s3 probe
+# yarn test:stack:full         # also boots api+web and probes HTTP
+yarn probe:stack               # probe already-running infra
+# yarn probe:stack:full        # + /health /ready + web
 ```
 
-Or: `yarn validate` / `yarn ci:local`.
+Or: `yarn validate` / `yarn ci:local` (includes `probe:stack` when infra is up).
 
 ## Rules
 
