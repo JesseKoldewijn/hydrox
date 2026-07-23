@@ -101,7 +101,8 @@ export function SettingsView(props: {
           {roles.map((r) => (
             <li key={r.id} class="rounded-md border border-border px-2 py-1">
               <span class="font-medium">{r.name}</span>
-              <span class="ml-2 text-muted-foreground">
+              {" — "}
+              <span class="text-muted-foreground">
                 {(r.capabilities ?? []).join(", ")}
               </span>
             </li>
