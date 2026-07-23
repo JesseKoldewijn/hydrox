@@ -33,4 +33,8 @@ yarn ci:local
 
 ## Docs
 
-Contracts and ADRs live in [`docs/`](./docs/).
+Contracts and ADRs live in [`docs/`](./docs/). Start with [`AGENTS.md`](./AGENTS.md) and [`docs/contracts/`](./docs/contracts/).
+
+### v0 product surfaces
+
+Board + issue detail (comments, attachments, soft-delete), backlog/sprints/initiatives, conflict dialog, custom roles/overrides, retention purge, in-app notifications + optional Web Push (`/sw.js`).

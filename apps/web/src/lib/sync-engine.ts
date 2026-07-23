@@ -238,6 +238,23 @@ export async function pullAndSubscribe(projectId: string) {
   }
 }
 
+export async function softDeleteIssueLocally(id: string) {
+  const current = await db.issues.get(id);
+  if (!current) return;
+  await db.issues.put({
+    ...current,
+    deletedAt: new Date().toISOString(),
+    pending: true,
+    updatedAt: new Date().toISOString(),
+  });
+  try {
+    await (trpc as any).work.softDeleteIssue.mutate({ id });
+    await db.issues.delete(id);
+  } catch (err) {
+    console.warn("soft delete failed", err);
+  }
+}
+
 export async function resolveConflict(
   conflictId: string,
   resolutions: Record<string, "local" | "server">,

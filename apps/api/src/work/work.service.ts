@@ -421,6 +421,50 @@ export class WorkService {
     return row!;
   }
 
+  async listComments(issueId: string) {
+    return this.db
+      .select({
+        id: comments.id,
+        issueId: comments.issueId,
+        authorId: comments.authorId,
+        body: comments.body,
+        createdAt: comments.createdAt,
+        updatedAt: comments.updatedAt,
+      })
+      .from(comments)
+      .where(and(eq(comments.issueId, issueId), isNull(comments.deletedAt)))
+      .orderBy(asc(comments.createdAt));
+  }
+
+  async listAttachmentsMeta(issueId: string) {
+    return this.db
+      .select({
+        id: attachments.id,
+        issueId: attachments.issueId,
+        fileName: attachments.fileName,
+        contentType: attachments.contentType,
+        sizeBytes: attachments.sizeBytes,
+        uploadedById: attachments.uploadedById,
+        createdAt: attachments.createdAt,
+      })
+      .from(attachments)
+      .where(
+        and(eq(attachments.issueId, issueId), isNull(attachments.deletedAt)),
+      );
+  }
+
+  async listCustomRoles(organizationId: string) {
+    return this.db
+      .select()
+      .from(customRoles)
+      .where(
+        and(
+          eq(customRoles.organizationId, organizationId),
+          isNull(customRoles.deletedAt),
+        ),
+      );
+  }
+
   async linkIssues(input: {
     sourceIssueId: string;
     targetIssueId: string;

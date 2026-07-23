@@ -275,6 +275,42 @@ export class WorkRouter {
     return this.work.addComment({ ...input, userId: ctx.user.id });
   }
 
+  @Query({ input: z.object({ issueId: z.string().uuid() }) })
+  async comments(
+    @Input() input: { issueId: string },
+    @TrpcContext() ctx: Ctx,
+  ) {
+    if (!ctx.user) throw new Error("UNAUTHORIZED");
+    return this.work.listComments(input.issueId);
+  }
+
+  @Query({ input: z.object({ issueId: z.string().uuid() }) })
+  async attachments(
+    @Input() input: { issueId: string },
+    @TrpcContext() ctx: Ctx,
+  ) {
+    if (!ctx.user) throw new Error("UNAUTHORIZED");
+    return this.work.listAttachmentsMeta(input.issueId);
+  }
+
+  @Mutation({ input: z.object({ id: z.string().uuid() }) })
+  async softDeleteIssue(
+    @Input() input: { id: string },
+    @TrpcContext() ctx: Ctx,
+  ) {
+    if (!ctx.user) throw new Error("UNAUTHORIZED");
+    return this.work.softDeleteIssue(input.id, ctx.user.id);
+  }
+
+  @Query({ input: z.object({ organizationId: z.string().uuid() }) })
+  async listCustomRoles(
+    @Input() input: { organizationId: string },
+    @TrpcContext() ctx: Ctx,
+  ) {
+    if (!ctx.user) throw new Error("UNAUTHORIZED");
+    return this.work.listCustomRoles(input.organizationId);
+  }
+
   @Mutation({
     input: z.object({
       sourceIssueId: z.string().uuid(),

@@ -1,13 +1,23 @@
+/* Hydrox Web Push service worker */
 self.addEventListener("push", (event) => {
-  let data = { title: "Hydrox", body: "" };
+  let title = "Hydrox";
+  let body = "";
   try {
-    data = event.data ? event.data.json() : data;
+    const data = event.data ? event.data.json() : {};
+    title = data.title || title;
+    body = data.body || "";
   } catch {
-    // ignore
+    body = event.data ? event.data.text() : "";
   }
   event.waitUntil(
-    self.registration.showNotification(data.title || "Hydrox", {
-      body: data.body || "",
+    self.registration.showNotification(title, {
+      body,
+      icon: "/favicon.svg",
     }),
   );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(clients.openWindow("/"));
 });

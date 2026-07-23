@@ -23,4 +23,15 @@ export class AdminRouter {
     await this.jobs.purgeAuditEvents();
     return this.jobs.purgeSoftDeleted(input.force);
   }
+
+  @Mutation({
+    input: z.object({ force: z.boolean().default(false) }),
+  })
+  async runRetention(
+    @Input() input: { force: boolean },
+    @TrpcContext() ctx: Ctx,
+  ) {
+    if (!ctx.user) throw new Error("UNAUTHORIZED");
+    return this.jobs.runRetentionNow(input.force);
+  }
 }

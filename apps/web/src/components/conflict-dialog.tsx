@@ -27,13 +27,16 @@ export function ConflictDialog() {
   if (!conflict) return null;
 
   return (
-    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      data-testid="conflict-dialog"
+    >
       <div class="w-full max-w-lg rounded-lg border border-border bg-card p-5 shadow-lg">
         <h2 class="text-lg font-semibold">{t("conflict.title")}</h2>
-        <p class="mt-1 text-sm text-muted-foreground">
+        <p class="mt-1 text-sm text-muted-foreground" data-testid="conflict-entity">
           {conflict.entityType} / {conflict.entityId}
         </p>
-        <ul class="mt-4 space-y-3">
+        <ul class="mt-4 space-y-3" data-testid="conflict-fields">
           {conflict.conflicts.map((c) => (
             <li key={c.field} class="rounded-md border border-border p-3 text-sm">
               <div class="font-medium">{c.field}</div>
@@ -49,6 +52,7 @@ export function ConflictDialog() {
               </div>
               <select
                 class="mt-2 rounded-md border border-border bg-background px-2 py-1"
+                data-testid={`conflict-choice-${c.field}`}
                 value={choices[c.field] ?? "local"}
                 onChange={(e: any) =>
                   setChoices((prev) => ({
@@ -66,9 +70,10 @@ export function ConflictDialog() {
         <button
           class={`${buttonVariants.default} mt-4`}
           type="button"
+          data-testid="conflict-resolve"
           onClick={() => void resolveConflict(conflict.id, choices)}
         >
-          Apply resolution
+          {t("conflict.apply")}
         </button>
       </div>
     </div>

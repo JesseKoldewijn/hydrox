@@ -8,7 +8,9 @@ Default fixed roles:
 
 Plus:
 
-- Project capability overrides
-- Organization custom roles (capability arrays)
+- Project capability overrides (`work.setProjectOverrides`)
+- Organization custom roles (`work.createCustomRole`, `work.listCustomRoles`)
+
+Settings UI: create/list custom roles, set overrides for a target user id, trigger purge.
 
 Capabilities catalog: see `capabilitySchema` in `@hydrox/contracts`.

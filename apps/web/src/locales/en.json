@@ -15,10 +15,19 @@
   "nav.settings": "Settings",
   "nav.notifications": "Notifications",
   "issue.create": "Create issue",
+  "issue.save": "Save",
+  "issue.delete": "Delete",
+  "issue.comments": "Comments",
+  "issue.attachments": "Attachments",
   "conflict.title": "Resolve sync conflict",
   "conflict.local": "Keep mine",
   "conflict.server": "Keep server",
+  "conflict.apply": "Apply resolution",
   "theme.system": "System",
   "theme.light": "Light",
-  "theme.dark": "Dark"
+  "theme.dark": "Dark",
+  "settings.roles": "Custom roles",
+  "settings.overrides": "Project overrides",
+  "settings.purge": "Retention purge",
+  "notify.enablePush": "Enable browser push"
 }

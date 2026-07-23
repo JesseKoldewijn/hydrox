@@ -208,7 +208,9 @@ export function AppShell(props: {
             </div>
           ) : (
             <>
-              {tab === "board" ? <BoardView projectId={projectId} /> : null}
+              {tab === "board" && orgId ? (
+                <BoardView projectId={projectId} organizationId={orgId} />
+              ) : null}
               {tab === "backlog" ? <BacklogView projectId={projectId} /> : null}
               {tab === "sprints" ? <SprintsView projectId={projectId} /> : null}
               {tab === "initiatives" && orgId ? (

@@ -34,17 +34,22 @@ const schema_work_startSprint_input_22 = z.object({ id: z.string() });
 const schema_work_completeSprint_input_23 = z.object({ id: z.string() });
 const schema_work_sprints_input_24 = z.object({ projectId: z.string() });
 const schema_work_addComment_input_25 = z.object({ issueId: z.string(), body: z.string() });
-const schema_work_linkIssues_input_26 = z.object({ sourceIssueId: z.string(), targetIssueId: z.string(), linkType: z.enum(["blocks","is_blocked_by","relates_to","duplicates"]) });
-const schema_work_saveFilter_input_27 = z.object({ projectId: z.string(), name: z.string(), query: z.record(z.string(), z.unknown()) });
-const schema_work_createCustomRole_input_28 = z.object({ organizationId: z.string(), name: z.string(), capabilities: z.array(z.enum(["project.view","project.edit","board.edit","issue.create","issue.edit","issue.delete","sprint.manage","workflow.manage","members.manage","roles.manage","attachments.manage","purge.trigger"])) });
-const schema_work_setProjectOverrides_input_29 = z.object({ projectId: z.string(), targetUserId: z.string(), capabilities: z.array(z.enum(["project.view","project.edit","board.edit","issue.create","issue.edit","issue.delete","sprint.manage","workflow.manage","members.manage","roles.manage","attachments.manage","purge.trigger"])), customRoleId: z.string().nullable().optional() });
-const schema_work_uploadAttachment_input_30 = z.object({ issueId: z.string(), organizationId: z.string(), projectId: z.string(), fileName: z.string(), contentType: z.string(), sizeBytes: z.number(), dataBase64: z.string() });
-const schema_work_attachmentDownload_input_31 = z.object({ attachmentId: z.string() });
-const schema_work_activity_input_32 = z.object({ organizationId: z.string() });
-const schema_notify_vapidPublicKey_output_33 = z.object({ publicKey: z.string().nullable() });
-const schema_notify_subscribePush_input_34 = z.object({ endpoint: z.string(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
-const schema_notify_sendInApp_input_35 = z.object({ userId: z.string(), organizationId: z.string(), title: z.string(), body: z.string().optional(), type: z.string().default("info") });
-const schema_admin_triggerPurge_input_36 = z.object({ force: z.boolean().default(false) });
+const schema_work_comments_input_26 = z.object({ issueId: z.string() });
+const schema_work_attachments_input_27 = z.object({ issueId: z.string() });
+const schema_work_softDeleteIssue_input_28 = z.object({ id: z.string() });
+const schema_work_listCustomRoles_input_29 = z.object({ organizationId: z.string() });
+const schema_work_linkIssues_input_30 = z.object({ sourceIssueId: z.string(), targetIssueId: z.string(), linkType: z.enum(["blocks","is_blocked_by","relates_to","duplicates"]) });
+const schema_work_saveFilter_input_31 = z.object({ projectId: z.string(), name: z.string(), query: z.record(z.string(), z.unknown()) });
+const schema_work_createCustomRole_input_32 = z.object({ organizationId: z.string(), name: z.string(), capabilities: z.array(z.enum(["project.view","project.edit","board.edit","issue.create","issue.edit","issue.delete","sprint.manage","workflow.manage","members.manage","roles.manage","attachments.manage","purge.trigger"])) });
+const schema_work_setProjectOverrides_input_33 = z.object({ projectId: z.string(), targetUserId: z.string(), capabilities: z.array(z.enum(["project.view","project.edit","board.edit","issue.create","issue.edit","issue.delete","sprint.manage","workflow.manage","members.manage","roles.manage","attachments.manage","purge.trigger"])), customRoleId: z.string().nullable().optional() });
+const schema_work_uploadAttachment_input_34 = z.object({ issueId: z.string(), organizationId: z.string(), projectId: z.string(), fileName: z.string(), contentType: z.string(), sizeBytes: z.number(), dataBase64: z.string() });
+const schema_work_attachmentDownload_input_35 = z.object({ attachmentId: z.string() });
+const schema_work_activity_input_36 = z.object({ organizationId: z.string() });
+const schema_notify_vapidPublicKey_output_37 = z.object({ publicKey: z.string().nullable() });
+const schema_notify_subscribePush_input_38 = z.object({ endpoint: z.string(), keys: z.object({ p256dh: z.string(), auth: z.string() }) });
+const schema_notify_sendInApp_input_39 = z.object({ userId: z.string(), organizationId: z.string(), title: z.string(), body: z.string().optional(), type: z.string().default("info") });
+const schema_admin_triggerPurge_input_40 = z.object({ force: z.boolean().default(false) });
+const schema_admin_runRetention_input_41 = z.object({ force: z.boolean().default(false) });
 
 const appRouter = t.router({
   health: t.router({
@@ -79,22 +84,27 @@ const appRouter = t.router({
     completeSprint: t.procedure.input(schema_work_completeSprint_input_23).mutation(() => undefined as unknown),
     sprints: t.procedure.input(schema_work_sprints_input_24).query(() => undefined as unknown),
     addComment: t.procedure.input(schema_work_addComment_input_25).mutation(() => undefined as unknown),
-    linkIssues: t.procedure.input(schema_work_linkIssues_input_26).mutation(() => undefined as unknown),
-    saveFilter: t.procedure.input(schema_work_saveFilter_input_27).mutation(() => undefined as unknown),
-    createCustomRole: t.procedure.input(schema_work_createCustomRole_input_28).mutation(() => undefined as unknown),
-    setProjectOverrides: t.procedure.input(schema_work_setProjectOverrides_input_29).mutation(() => undefined as unknown),
-    uploadAttachment: t.procedure.input(schema_work_uploadAttachment_input_30).mutation(() => undefined as unknown),
-    attachmentDownload: t.procedure.input(schema_work_attachmentDownload_input_31).query(() => undefined as unknown),
-    activity: t.procedure.input(schema_work_activity_input_32).query(() => undefined as unknown),
+    comments: t.procedure.input(schema_work_comments_input_26).query(() => undefined as unknown),
+    attachments: t.procedure.input(schema_work_attachments_input_27).query(() => undefined as unknown),
+    softDeleteIssue: t.procedure.input(schema_work_softDeleteIssue_input_28).mutation(() => undefined as unknown),
+    listCustomRoles: t.procedure.input(schema_work_listCustomRoles_input_29).query(() => undefined as unknown),
+    linkIssues: t.procedure.input(schema_work_linkIssues_input_30).mutation(() => undefined as unknown),
+    saveFilter: t.procedure.input(schema_work_saveFilter_input_31).mutation(() => undefined as unknown),
+    createCustomRole: t.procedure.input(schema_work_createCustomRole_input_32).mutation(() => undefined as unknown),
+    setProjectOverrides: t.procedure.input(schema_work_setProjectOverrides_input_33).mutation(() => undefined as unknown),
+    uploadAttachment: t.procedure.input(schema_work_uploadAttachment_input_34).mutation(() => undefined as unknown),
+    attachmentDownload: t.procedure.input(schema_work_attachmentDownload_input_35).query(() => undefined as unknown),
+    activity: t.procedure.input(schema_work_activity_input_36).query(() => undefined as unknown),
   }),
   notify: t.router({
-    vapidPublicKey: t.procedure.output(schema_notify_vapidPublicKey_output_33).query(() => null as unknown as z.infer<typeof schema_notify_vapidPublicKey_output_33>),
-    subscribePush: t.procedure.input(schema_notify_subscribePush_input_34).mutation(() => undefined as unknown),
+    vapidPublicKey: t.procedure.output(schema_notify_vapidPublicKey_output_37).query(() => null as unknown as z.infer<typeof schema_notify_vapidPublicKey_output_37>),
+    subscribePush: t.procedure.input(schema_notify_subscribePush_input_38).mutation(() => undefined as unknown),
     list: t.procedure.query(() => undefined as unknown),
-    sendInApp: t.procedure.input(schema_notify_sendInApp_input_35).mutation(() => undefined as unknown),
+    sendInApp: t.procedure.input(schema_notify_sendInApp_input_39).mutation(() => undefined as unknown),
   }),
   admin: t.router({
-    triggerPurge: t.procedure.input(schema_admin_triggerPurge_input_36).mutation(() => undefined as unknown),
+    triggerPurge: t.procedure.input(schema_admin_triggerPurge_input_40).mutation(() => undefined as unknown),
+    runRetention: t.procedure.input(schema_admin_runRetention_input_41).mutation(() => undefined as unknown),
   })
 });
 
