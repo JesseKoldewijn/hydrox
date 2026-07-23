@@ -31,7 +31,7 @@ yarn test
 # when touching API/DB/sync:
 yarn test:integration
 # when touching web UX:
-yarn workspace @hydrox/web test:e2e
+yarn workspace @hydrox/web test:e2e   # also run in CI after API+web boot
 # when touching Docker/infra/health:
 yarn test:stack:infra          # compose + postgres/redis/s3 probe
 # yarn test:stack:full         # also boots api+web and probes HTTP

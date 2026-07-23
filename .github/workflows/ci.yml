@@ -48,6 +48,10 @@ jobs:
       S3_ACCESS_KEY_ID: test
       S3_SECRET_ACCESS_KEY: test
       S3_REGION: us-east-1
+      API_PORT: 3001
+      API_URL: http://127.0.0.1:3001
+      WEB_ORIGIN: http://127.0.0.1:5173
+      COOKIE_SECRET: hydrox-ci-cookie-secret
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,6 +71,36 @@ jobs:
         run: yarn db:migrate
       - name: Integration tests
         run: yarn test:integration
+      - name: Install Playwright Chromium
+        run: yarn workspace @hydrox/web exec playwright install --with-deps chromium
+      - name: Start API
+        run: |
+          yarn workspace @hydrox/api start > /tmp/hydrox-api.log 2>&1 &
+          echo $! > /tmp/hydrox-api.pid
+      - name: Start web
+        run: |
+          yarn workspace @hydrox/web dev --host 127.0.0.1 --port 5173 > /tmp/hydrox-web.log 2>&1 &
+          echo $! > /tmp/hydrox-web.pid
+      - name: Wait for API and web
+        run: |
+          bash docker/scripts/wait-for-http.sh http://127.0.0.1:3001/ready 60 2
+          bash docker/scripts/wait-for-http.sh http://127.0.0.1:5173 60 2
+      - name: E2E tests
+        run: yarn test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+      - name: Dump server logs on failure
+        if: failure()
+        run: |
+          echo '--- API log ---'
+          cat /tmp/hydrox-api.log 2>/dev/null || true
+          echo '--- web log ---'
+          cat /tmp/hydrox-web.log 2>/dev/null || true
+      - name: Stop servers
+        if: always()
+        run: |
+          kill "$(cat /tmp/hydrox-api.pid 2>/dev/null)" 2>/dev/null || true
+          kill "$(cat /tmp/hydrox-web.pid 2>/dev/null)" 2>/dev/null || true
 
   docker:
     runs-on: ubuntu-latest
