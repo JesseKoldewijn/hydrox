@@ -7,7 +7,7 @@ import {
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { existsSync } from "node:fs";
-import type { Server as HttpServer } from "node:http";
+import type { IncomingMessage, Server as HttpServer, ServerResponse } from "node:http";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AppModule } from "./app.module.js";
@@ -16,6 +16,17 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const monorepoRoot = resolve(__dirname, "../../..");
 const webRoot = join(monorepoRoot, "apps/web");
 const webDist = join(webRoot, "dist");
+
+function isApiPath(url: string) {
+  const path = url.split("?")[0] ?? "";
+  return (
+    path.startsWith("/trpc") ||
+    path === "/health" ||
+    path === "/ready" ||
+    path.startsWith("/health/") ||
+    path.startsWith("/ready/")
+  );
+}
 
 async function registerViteDev(app: NestFastifyApplication) {
   // Nest Fastify already registers middie — use app.use(), never @fastify/middie.
@@ -34,15 +45,8 @@ async function registerViteDev(app: NestFastifyApplication) {
     appType: "custom",
   });
 
-  app.use((req: { url?: string }, res: unknown, next: (err?: unknown) => void) => {
-    const path = (req.url ?? "").split("?")[0] ?? "";
-    if (
-      path.startsWith("/trpc") ||
-      path === "/health" ||
-      path === "/ready" ||
-      path.startsWith("/health/") ||
-      path.startsWith("/ready/")
-    ) {
+  app.use((req: IncomingMessage, res: ServerResponse, next: (err?: unknown) => void) => {
+    if (isApiPath(req.url ?? "")) {
       return next();
     }
     return vite.middlewares(req, res, next);
