@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { Input, Mutation, Router, TrpcContext } from "@nest-native/trpc";
 import { z } from "zod";
 import { RetentionJobsService } from "../jobs/jobs.module.js";
@@ -7,7 +7,9 @@ import type { TrpcContext as Ctx } from "./context.js";
 @Router("admin")
 @Injectable()
 export class AdminRouter {
-  constructor(private readonly jobs: RetentionJobsService) {}
+  constructor(
+    @Inject(RetentionJobsService) private readonly jobs: RetentionJobsService,
+  ) {}
 
   @Mutation({
     input: z.object({ force: z.boolean().default(false) }),

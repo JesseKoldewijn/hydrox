@@ -14,7 +14,7 @@ import type { TrpcContext as Ctx } from "./context.js";
 export class NotifyRouter {
   constructor(
     @Inject(DB) private readonly db: HydroxDb,
-    private readonly work: WorkService,
+    @Inject(WorkService) private readonly work: WorkService,
   ) {
     if (process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY) {
       webpush.setVapidDetails(

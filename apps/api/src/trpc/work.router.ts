@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { Input, Mutation, Query, Router, TrpcContext } from "@nest-native/trpc";
 import { z } from "zod";
 import {
@@ -12,7 +12,6 @@ import { StorageService } from "../storage/storage.module.js";
 import type { TrpcContext as Ctx } from "./context.js";
 import { organizations, workspaces, organizationMemberships } from "@hydrox/db";
 import { and, eq, isNull } from "drizzle-orm";
-import { Inject } from "@nestjs/common";
 import { DB } from "../db/db.module.js";
 import type { HydroxDb } from "@hydrox/db";
 
@@ -20,9 +19,9 @@ import type { HydroxDb } from "@hydrox/db";
 @Injectable()
 export class WorkRouter {
   constructor(
-    private readonly work: WorkService,
-    private readonly permissions: PermissionsService,
-    private readonly storage: StorageService,
+    @Inject(WorkService) private readonly work: WorkService,
+    @Inject(PermissionsService) private readonly permissions: PermissionsService,
+    @Inject(StorageService) private readonly storage: StorageService,
     @Inject(DB) private readonly db: HydroxDb,
   ) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import {
   Input,
   Mutation,
@@ -21,7 +21,7 @@ import { observable } from "@trpc/server/observable";
 @Router("sync")
 @Injectable()
 export class SyncRouter {
-  constructor(private readonly sync: SyncService) {}
+  constructor(@Inject(SyncService) private readonly sync: SyncService) {}
 
   @Mutation({
     input: syncPushRequestSchema,

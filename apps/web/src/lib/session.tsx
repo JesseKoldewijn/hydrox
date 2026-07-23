@@ -27,6 +27,7 @@ export function useSession() {
 
   async function logout() {
     await (trpc as any).auth.logout.mutate();
+    localStorage.removeItem("hydrox_token");
     setUser(null);
   }
 

@@ -27,7 +27,7 @@ import type { SyncPatchEvent } from "@hydrox/contracts";
 export class WorkService {
   constructor(
     @Inject(DB) private readonly db: HydroxDb,
-    private readonly bus: SyncBusService,
+    @Inject(SyncBusService) private readonly bus: SyncBusService,
   ) {}
 
   async createProject(input: {

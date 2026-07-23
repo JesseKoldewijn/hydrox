@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable } from "@nestjs/common";
 import { Input, Mutation, Query, Router, TrpcContext } from "@nest-native/trpc";
 import { z } from "zod";
 import {
@@ -18,11 +18,17 @@ import {
 @Injectable()
 export class AuthRouter {
   constructor(
-    private readonly auth: AuthService,
-    private readonly workos: WorkosService,
+    @Inject(AuthService) private readonly auth: AuthService,
+    @Inject(WorkosService) private readonly workos: WorkosService,
   ) {}
 
-  @Mutation({ input: registerInputSchema })
+  @Mutation({
+    input: registerInputSchema,
+    output: z.object({
+      user: sessionUserSchema,
+      token: z.string(),
+    }),
+  })
   async register(
     @Input() input: z.infer<typeof registerInputSchema>,
     @TrpcContext() ctx: Ctx,
@@ -34,10 +40,16 @@ export class AuthRouter {
       sameSite: "lax",
       maxAge: 14 * 86400,
     });
-    return result.user;
+    return { user: result.user, token: result.token };
   }
 
-  @Mutation({ input: loginInputSchema })
+  @Mutation({
+    input: loginInputSchema,
+    output: z.object({
+      user: sessionUserSchema,
+      token: z.string(),
+    }),
+  })
   async login(
     @Input() input: z.infer<typeof loginInputSchema>,
     @TrpcContext() ctx: Ctx,
@@ -49,7 +61,7 @@ export class AuthRouter {
       sameSite: "lax",
       maxAge: 14 * 86400,
     });
-    return result.user;
+    return { user: result.user, token: result.token };
   }
 
   @Mutation()
@@ -102,6 +114,6 @@ export class AuthRouter {
       sameSite: "lax",
       maxAge: 14 * 86400,
     });
-    return auth.user;
+    return { user: auth.user, token: auth.token };
   }
 }

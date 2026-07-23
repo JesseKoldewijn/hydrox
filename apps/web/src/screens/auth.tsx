@@ -26,14 +26,16 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
     setError(null);
     try {
       if (mode === "login") {
-        await (trpc as any).auth.login.mutate({ login, password });
+        const result = await (trpc as any).auth.login.mutate({ login, password });
+        if (result?.token) localStorage.setItem("hydrox_token", result.token);
       } else {
-        await (trpc as any).auth.register.mutate({
+        const result = await (trpc as any).auth.register.mutate({
           email,
           username,
           password,
           displayName,
         });
+        if (result?.token) localStorage.setItem("hydrox_token", result.token);
       }
       await props.onAuthed();
     } catch (err) {

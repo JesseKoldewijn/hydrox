@@ -19,6 +19,18 @@ import { WorkModule } from "./work/work.module.js";
 import { AuthService } from "./auth/auth.service.js";
 import { extractToken, SESSION_COOKIE } from "./trpc/context.js";
 
+function parseCookieHeader(header: unknown): Record<string, string> {
+  if (typeof header !== "string" || !header) return {};
+  const out: Record<string, string> = {};
+  for (const part of header.split(";")) {
+    const idx = part.indexOf("=");
+    if (idx <= 0) continue;
+    const key = part.slice(0, idx).trim();
+    const value = decodeURIComponent(part.slice(idx + 1).trim());
+    out[key] = value;
+  }
+  return out;
+}
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -36,7 +48,10 @@ import { extractToken, SESSION_COOKIE } from "./trpc/context.js";
         path: "/trpc",
         autoSchemaFile: join(process.cwd(), "src/@generated/server.ts"),
         createContext: async ({ req, res }: { req: any; res: any }) => {
-          const cookies = req.cookies ?? {};
+          const cookies = {
+            ...(req.cookies ?? {}),
+            ...parseCookieHeader(req.headers?.cookie),
+          };
           const token = extractToken({
             headers: req.headers ?? {},
             cookies,
@@ -48,16 +63,43 @@ import { extractToken, SESSION_COOKIE } from "./trpc/context.js";
               cookies,
             },
             res: {
-              setCookie: (name: string, value: string, opts?: object) => {
-                if (typeof res.setCookie === "function") {
+              setCookie: (name: string, value: string, opts?: Record<string, unknown>) => {
+                if (typeof res?.setCookie === "function") {
                   res.setCookie(name, value, opts);
-                } else if (typeof res.cookie === "function") {
-                  res.cookie(name, value, opts);
+                  return;
+                }
+                // Node/Fastify raw reply or ServerResponse
+                const reply = res?.raw ?? res;
+                if (typeof reply?.setHeader === "function") {
+                  const attrs = [
+                    `${name}=${encodeURIComponent(value)}`,
+                    `Path=${(opts?.path as string) ?? "/"}`,
+                    "HttpOnly",
+                    `SameSite=${(opts?.sameSite as string) ?? "Lax"}`,
+                  ];
+                  if (typeof opts?.maxAge === "number") {
+                    attrs.push(`Max-Age=${opts.maxAge}`);
+                  }
+                  const prev = reply.getHeader?.("Set-Cookie");
+                  const next = Array.isArray(prev)
+                    ? [...prev, attrs.join("; ")]
+                    : prev
+                      ? [String(prev), attrs.join("; ")]
+                      : attrs.join("; ");
+                  reply.setHeader("Set-Cookie", next);
                 }
               },
               clearCookie: (name: string) => {
-                if (typeof res.clearCookie === "function") {
+                if (typeof res?.clearCookie === "function") {
                   res.clearCookie(name);
+                  return;
+                }
+                const reply = res?.raw ?? res;
+                if (typeof reply?.setHeader === "function") {
+                  reply.setHeader(
+                    "Set-Cookie",
+                    `${name}=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax`,
+                  );
                 }
               },
             },

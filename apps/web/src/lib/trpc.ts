@@ -41,5 +41,13 @@ export const trpc = createTRPCProxyClient<HydroxRouter>({
 });
 
 function fetchWithCreds(url: RequestInfo | URL, opts?: RequestInit) {
-  return fetch(url, { ...opts, credentials: "include" });
+  const headers = new Headers(opts?.headers);
+  const token =
+    typeof localStorage !== "undefined"
+      ? localStorage.getItem("hydrox_token")
+      : null;
+  if (token && !headers.has("authorization")) {
+    headers.set("authorization", `Bearer ${token}`);
+  }
+  return fetch(url, { ...opts, headers, credentials: "include" });
 }

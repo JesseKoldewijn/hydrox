@@ -11,8 +11,8 @@ import { WorkService } from "./work.service.js";
 export class SyncService {
   constructor(
     @Inject(DB) private readonly db: HydroxDb,
-    private readonly bus: SyncBusService,
-    private readonly work: WorkService,
+    @Inject(SyncBusService) private readonly bus: SyncBusService,
+    @Inject(WorkService) private readonly work: WorkService,
   ) {}
 
   async push(userId: string, ops: SyncOp[]): Promise<SyncPushResult> {
