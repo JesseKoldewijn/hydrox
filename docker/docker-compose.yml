@@ -96,7 +96,10 @@ services:
       dockerfile: docker/web.Dockerfile
       target: dev
     environment:
+      # Browser → host-published API (not docker DNS)
       VITE_API_URL: http://localhost:3001
+      # Vite server-side /trpc proxy target (compose network)
+      API_URL: http://api:3001
     ports:
       - "5173:5173"
     volumes:

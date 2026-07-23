@@ -29,7 +29,9 @@ case "$MODE" in
   prod)
     COMPOSE_FILE="docker/docker-compose.prod.yml"
     SERVICES=(postgres redis localstack api web)
-    PROBE_FLAGS=(--full)
+    # Prod compose does not publish postgres/redis/localstack to the host;
+    # api /ready covers DB+Redis; probe published HTTP surfaces only.
+    PROBE_FLAGS=(--http-only)
     export WEB_URL="${WEB_URL:-http://127.0.0.1:8080}"
     export API_URL="${API_URL:-http://127.0.0.1:3001}"
     ;;

@@ -4,6 +4,7 @@
  * Usage:
  *   node scripts/probe-stack.mjs
  *   node scripts/probe-stack.mjs --require-api --require-web
+ *   node scripts/probe-stack.mjs --http-only   # API+web only (prod compose: DB/S3 not published)
  *
  * Exit 0 only when all required probes pass.
  */
@@ -12,8 +13,10 @@ import postgres from "postgres";
 import { S3Client, HeadBucketCommand, CreateBucketCommand } from "@aws-sdk/client-s3";
 
 const args = new Set(process.argv.slice(2));
-const requireApi = args.has("--require-api") || args.has("--full");
-const requireWeb = args.has("--require-web") || args.has("--full");
+const httpOnly = args.has("--http-only");
+const requireApi = args.has("--require-api") || args.has("--full") || httpOnly;
+const requireWeb = args.has("--require-web") || args.has("--full") || httpOnly;
+const probeInfra = !httpOnly;
 
 const DATABASE_URL =
   process.env.DATABASE_URL ?? "postgres://hydrox:hydrox@localhost:5432/hydrox";
@@ -112,9 +115,11 @@ async function probeHttp(name, url, expectJsonStatus) {
   }
 }
 
-await probePostgres();
-await probeRedis();
-await probeS3();
+if (probeInfra) {
+  await probePostgres();
+  await probeRedis();
+  await probeS3();
+}
 
 if (requireApi) {
   await probeHttp("api.health", `${API_URL}/health`, "ok");

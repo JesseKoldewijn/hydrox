@@ -53,9 +53,18 @@ function parseCookieHeader(header: unknown): Record<string, string> {
             ...(req.cookies ?? {}),
             ...parseCookieHeader(req.headers?.cookie),
           };
+          const url =
+            typeof req.raw?.url === "string"
+              ? req.raw.url
+              : typeof req.url === "string"
+                ? req.url
+                : typeof req.originalUrl === "string"
+                  ? req.originalUrl
+                  : undefined;
           const token = extractToken({
             headers: req.headers ?? {},
             cookies,
+            url,
           });
           const user = await auth.userFromToken(token);
           return {

@@ -38,7 +38,7 @@ yarn test:stack:infra
 yarn test:stack:full
 
 # Prod compose images
-yarn test:stack:prod
+yarn test:stack:prod          # HTTP-only probe (DB/S3 stay on the compose network)
 
 # Probe against already-running services
 yarn probe:stack              # postgres + redis + s3
