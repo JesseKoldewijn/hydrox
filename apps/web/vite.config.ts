@@ -10,8 +10,9 @@ export default defineConfig({
       "@": path.resolve(__dirname, "src"),
     },
   },
+  // Keep Vite cache out of node_modules (Docker volume mounts can make those root-owned).
+  cacheDir: path.resolve(__dirname, ".vite"),
   server: {
-    // When Nest mounts Vite in middleware mode, HMR attaches to the Nest port.
     port: 3000,
     strictPort: false,
   },

@@ -16,4 +16,5 @@ coverage
 playwright-report
 test-results
 apps/web/dist-ssg
+apps/web/.vite
 *.tsbuildinfo

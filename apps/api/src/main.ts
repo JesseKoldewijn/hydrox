@@ -7,6 +7,7 @@ import {
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { existsSync } from "node:fs";
+import type { Server as HttpServer } from "node:http";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { AppModule } from "./app.module.js";
@@ -16,24 +17,51 @@ const monorepoRoot = resolve(__dirname, "../../..");
 const webRoot = join(monorepoRoot, "apps/web");
 const webDist = join(webRoot, "dist");
 
-async function registerSpa(app: NestFastifyApplication, isDev: boolean) {
+async function registerViteDev(app: NestFastifyApplication) {
+  // Nest Fastify already registers middie — use app.use(), never @fastify/middie.
+  const { createServer } = await import("vite");
+  const httpServer = app.getHttpServer() as HttpServer;
+  const vite = await createServer({
+    configFile: join(webRoot, "vite.config.ts"),
+    root: webRoot,
+    cacheDir: join(webRoot, ".vite"),
+    server: {
+      middlewareMode: true,
+      // Attach HMR websocket to Nest's HTTP server (Vite 8+: server.ws).
+      ws: { server: httpServer },
+    },
+    // Avoid Vite SPA fallback capturing /trpc, /health, /ready.
+    appType: "custom",
+  });
+
+  app.use((req: { url?: string }, res: unknown, next: (err?: unknown) => void) => {
+    const path = (req.url ?? "").split("?")[0] ?? "";
+    if (
+      path.startsWith("/trpc") ||
+      path === "/health" ||
+      path === "/ready" ||
+      path.startsWith("/health/") ||
+      path.startsWith("/ready/")
+    ) {
+      return next();
+    }
+    return vite.middlewares(req, res, next);
+  });
+
+  // Transform and serve index.html for document navigations.
   const fastify = app.getHttpAdapter().getInstance();
+  fastify.get("/", async (_req, reply) => {
+    const { readFileSync } = await import("node:fs");
+    const template = readFileSync(join(webRoot, "index.html"), "utf-8");
+    const html = await vite.transformIndexHtml("/", template);
+    return reply.type("text/html").send(html);
+  });
 
-  if (isDev) {
-    const middie = (await import("@fastify/middie")).default;
-    const { createServer } = await import("vite");
-    await fastify.register(middie);
-    const vite = await createServer({
-      configFile: join(webRoot, "vite.config.ts"),
-      root: webRoot,
-      server: { middlewareMode: true },
-      appType: "spa",
-    });
-    fastify.use(vite.middlewares);
-    console.log(`Vite middleware mounted from ${webRoot}`);
-    return;
-  }
+  console.log(`Vite middleware mounted from ${webRoot}`);
+}
 
+async function registerStaticProd(app: NestFastifyApplication) {
+  const fastify = app.getHttpAdapter().getInstance();
   if (!existsSync(webDist)) {
     console.warn(
       `Web dist not found at ${webDist}; SPA static serving disabled`,
@@ -84,7 +112,14 @@ async function bootstrap() {
     secret: process.env.COOKIE_SECRET ?? "hydrox-dev-cookie-secret-change-me",
   });
 
-  await registerSpa(app, isDev);
+  // Init so Nest registers its middie clone and HTTP server exists for Vite HMR.
+  await app.init();
+
+  if (isDev) {
+    await registerViteDev(app);
+  } else {
+    await registerStaticProd(app);
+  }
 
   const port = Number(process.env.PORT ?? process.env.API_PORT ?? 3000);
   await app.listen(port, "0.0.0.0");
