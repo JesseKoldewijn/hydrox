@@ -11,8 +11,7 @@ import { AdminRouter } from "./trpc/admin.router.js";
 import { AppRouter } from "./trpc/app.router.js";
 import { DbModule } from "./db/db.module.js";
 import { AuthModule } from "./auth/auth.module.js";
-import { RedisModule } from "./redis/redis.module.js";
-import { RedisBusModule } from "./redis/redis-bus.module.js";
+import { SyncModule } from "./sync/sync.module.js";
 import { StorageModule } from "./storage/storage.module.js";
 import { JobsModule } from "./jobs/jobs.module.js";
 import { WorkModule } from "./work/work.module.js";
@@ -37,8 +36,7 @@ function parseCookieHeader(header: unknown): Record<string, string> {
     ScheduleModule.forRoot(),
     DbModule,
     AuthModule,
-    RedisModule,
-    RedisBusModule,
+    SyncModule,
     StorageModule,
     JobsModule,
     WorkModule,

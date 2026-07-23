@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { entityIdSchema, orgRoleSchema } from "./common.js";
 
-export const identityProviderSchema = z.enum(["password", "workos"]);
+export const identityProviderSchema = z.enum(["password"]);
 
 export const registerInputSchema = z.object({
   email: z.string().email(),
@@ -29,11 +29,6 @@ export type SessionUser = z.infer<typeof sessionUserSchema>;
 export const authProviderSchema = z.object({
   provider: identityProviderSchema,
   externalId: z.string().nullable(),
-});
-
-export const workosCallbackSchema = z.object({
-  code: z.string(),
-  state: z.string().optional(),
 });
 
 export const createOrganizationInputSchema = z.object({

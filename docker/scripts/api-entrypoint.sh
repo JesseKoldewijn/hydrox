@@ -1,21 +1,17 @@
 #!/usr/bin/env bash
-# API container entrypoint: wait for deps, migrate, then exec the server command.
+# App container entrypoint: wait for MySQL, migrate, then exec the server command.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
-# When running inside the image, scripts live under /app/docker/scripts
 if [[ -f /app/docker/scripts/wait-for-tcp.sh ]]; then
   SCRIPT_DIR=/app/docker/scripts
 else
   SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 fi
 
-DATABASE_URL="${DATABASE_URL:-postgres://hydrox:hydrox@postgres:5432/hydrox}"
-REDIS_URL="${REDIS_URL:-redis://redis:6379}"
-S3_ENDPOINT="${S3_ENDPOINT:-}"
+DATABASE_URL="${DATABASE_URL:-mysql://hydrox:hydrox@mysql:3306/hydrox}"
 
 parse_host_port() {
-  # Supports postgres://user:pass@host:port/db and redis://host:port
   local url="$1"
   local default_port="$2"
   local without_scheme="${url#*://}"
@@ -29,16 +25,8 @@ parse_host_port() {
   echo "$host" "$port"
 }
 
-read -r PG_HOST PG_PORT < <(parse_host_port "$DATABASE_URL" 5432)
-read -r REDIS_HOST REDIS_PORT < <(parse_host_port "$REDIS_URL" 6379)
-
-bash "$SCRIPT_DIR/wait-for-tcp.sh" "$PG_HOST" "$PG_PORT"
-bash "$SCRIPT_DIR/wait-for-tcp.sh" "$REDIS_HOST" "$REDIS_PORT"
-
-if [[ -n "$S3_ENDPOINT" ]]; then
-  read -r S3_HOST S3_PORT < <(parse_host_port "$S3_ENDPOINT" 4566)
-  bash "$SCRIPT_DIR/wait-for-tcp.sh" "$S3_HOST" "$S3_PORT" 30 2 || true
-fi
+read -r DB_HOST DB_PORT < <(parse_host_port "$DATABASE_URL" 3306)
+bash "$SCRIPT_DIR/wait-for-tcp.sh" "$DB_HOST" "$DB_PORT"
 
 echo "warmup: running database migrations"
 if command -v yarn >/dev/null 2>&1; then
@@ -50,5 +38,5 @@ else
   echo "warmup: yarn not found; skipping migrate (expect pre-migrated DB)" >&2
 fi
 
-echo "warmup: starting API"
+echo "warmup: starting Hydrox"
 exec "$@"

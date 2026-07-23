@@ -7,10 +7,8 @@ import {
 import type { AnyRouter } from "@trpc/server";
 
 /**
- * Browser HTTP/SSE base URL.
- * Empty → same-origin `/trpc` (Vite proxies in dev).
- * In Docker Compose, set `VITE_API_URL=http://localhost:3001` so the browser
- * hits the published API port (container DNS names are not reachable from the host browser).
+ * Same-origin `/trpc` (Nest serves Octane + API on one port).
+ * Optional override: `VITE_API_URL` for split deployments.
  */
 const apiUrl = import.meta.env.VITE_API_URL ?? "";
 
@@ -45,7 +43,6 @@ export const trpc = createTRPCProxyClient<HydroxRouter>({
       condition: (op) => op.type === "subscription",
       true: httpSubscriptionLink({
         url: `${apiUrl}/trpc`,
-        // EventSource cannot set Authorization; pass session via connectionParams.
         connectionParams,
         eventSourceOptions: { withCredentials: true },
       }),

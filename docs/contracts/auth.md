@@ -1,7 +1,7 @@
 # Auth
 
-- Unified `users` + `identities` tables.
-- Providers: `password` (Nest/argon2) and optional `workos`.
-- WorkOS Organization ↔ our Organization (`workosOrganizationId`).
-- Directory Sync maps groups → workspace memberships when configured.
-- Product features never branch on identity provider.
+- Provider: `password` (Nest / argon2) only.
+- Sessions: opaque token (cookie + `Authorization: Bearer`).
+- Register creates user + default organization + workspace.
+
+No WorkOS (or other IdP) in the default stack.

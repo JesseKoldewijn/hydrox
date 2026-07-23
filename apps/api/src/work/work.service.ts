@@ -20,7 +20,7 @@ import {
 } from "@hydrox/db";
 import { DEFAULT_WORKFLOW_STATUSES, formatIssueKey, rankBetween } from "@hydrox/domain";
 import { DB } from "../db/db.module.js";
-import { SyncBusService } from "../redis/sync-bus.service.js";
+import { SyncBusService } from "../sync/sync-bus.service.js";
 import type { SyncPatchEvent } from "@hydrox/contracts";
 
 @Injectable()
@@ -530,20 +530,47 @@ export class WorkService {
     fileName: string;
     contentType: string;
     sizeBytes: number;
-    s3Key: string;
+    data: Buffer;
   }) {
     const id = crypto.randomUUID();
     await this.db.insert(attachments).values({
       id,
-      ...input,
+      issueId: input.issueId,
+      uploadedById: input.uploadedById,
+      fileName: input.fileName,
+      contentType: input.contentType,
+      sizeBytes: input.sizeBytes,
+      data: input.data,
       updatedById: input.uploadedById,
     });
     const [row] = await this.db
-      .select()
+      .select({
+        id: attachments.id,
+        issueId: attachments.issueId,
+        uploadedById: attachments.uploadedById,
+        fileName: attachments.fileName,
+        contentType: attachments.contentType,
+        sizeBytes: attachments.sizeBytes,
+        version: attachments.version,
+        updatedById: attachments.updatedById,
+        createdAt: attachments.createdAt,
+        updatedAt: attachments.updatedAt,
+        deletedAt: attachments.deletedAt,
+        deletedById: attachments.deletedById,
+      })
       .from(attachments)
       .where(eq(attachments.id, id))
       .limit(1);
     return row!;
+  }
+
+  async getAttachmentBlob(id: string) {
+    const [row] = await this.db
+      .select()
+      .from(attachments)
+      .where(and(eq(attachments.id, id), isNull(attachments.deletedAt)))
+      .limit(1);
+    return row ?? null;
   }
 
   async createNotification(input: {

@@ -1,17 +1,12 @@
 import { Controller, Get, Inject, ServiceUnavailableException } from "@nestjs/common";
 import { sql } from "drizzle-orm";
-import { Redis } from "ioredis";
 import { DB } from "../db/db.module.js";
 import type { HydroxDb } from "@hydrox/db";
-import { REDIS } from "../redis/redis.module.js";
 import { PROTOCOL_VERSION } from "@hydrox/contracts";
 
 @Controller()
 export class HealthController {
-  constructor(
-    @Inject(DB) private readonly db: HydroxDb,
-    @Inject(REDIS) private readonly redis: Redis,
-  ) {}
+  constructor(@Inject(DB) private readonly db: HydroxDb) {}
 
   /** Liveness: process is up. */
   @Get("health")
@@ -24,26 +19,18 @@ export class HealthController {
     };
   }
 
-  /** Readiness: Postgres + Redis are reachable. */
+  /** Readiness: MySQL is reachable. */
   @Get("ready")
   async ready() {
     const checks: Record<string, "ok" | "error"> = {
-      postgres: "error",
-      redis: "error",
+      mysql: "error",
     };
 
     try {
       await this.db.execute(sql`select 1`);
-      checks.postgres = "ok";
+      checks.mysql = "ok";
     } catch {
-      checks.postgres = "error";
-    }
-
-    try {
-      const pong = await this.redis.ping();
-      checks.redis = pong === "PONG" ? "ok" : "error";
-    } catch {
-      checks.redis = "error";
+      checks.mysql = "error";
     }
 
     const ready = Object.values(checks).every((v) => v === "ok");

@@ -1,5 +1,5 @@
 /** @jsxImportSource octane */
-import { useEffect, useState } from "octane";
+import { useState } from "octane";
 import { buttonVariants } from "@hydrox/ui";
 import { trpc } from "../lib/trpc";
 import { t } from "../i18n";
@@ -12,17 +12,7 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [workos, setWorkos] = useState<{ enabled: boolean; url: string | null } | null>(
-    null,
-  );
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    void (trpc as any).auth.workosLoginUrl
-      .query()
-      .then((r: any) => setWorkos(r))
-      .catch(() => setWorkos({ enabled: false, url: null }));
-  }, []);
 
   async function submit(e: Event) {
     e.preventDefault();
@@ -125,11 +115,6 @@ export function AuthScreen(props: { onAuthed: () => void | Promise<void> }) {
         >
           {mode === "login" ? t("auth.register") : t("auth.login")}
         </button>
-        {workos?.enabled && workos.url ? (
-          <a class={buttonVariants.secondary + " mt-2 w-full"} href={workos.url}>
-            Continue with WorkOS
-          </a>
-        ) : null}
       </main>
     </div>
   );

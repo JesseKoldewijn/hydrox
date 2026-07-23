@@ -14,7 +14,6 @@ export const organizationSchema = versionedEntitySchema
   .extend({
     name: z.string(),
     slug: z.string(),
-    workosOrganizationId: z.string().nullable(),
   });
 
 export const workspaceSchema = versionedEntitySchema

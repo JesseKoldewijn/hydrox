@@ -4,7 +4,7 @@ import { mergeFields, toSyncConflict } from "@hydrox/sync";
 import type { SyncOp, SyncPushResult } from "@hydrox/contracts";
 import { issues, syncIdempotency, type HydroxDb } from "@hydrox/db";
 import { DB } from "../db/db.module.js";
-import { SyncBusService } from "../redis/sync-bus.service.js";
+import { SyncBusService } from "../sync/sync-bus.service.js";
 import { WorkService } from "./work.service.js";
 
 function issueFields(row: typeof issues.$inferSelect): Record<string, unknown> {

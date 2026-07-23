@@ -10,7 +10,7 @@ export const DB = Symbol("HYDROX_DB");
       useFactory: (): HydroxDb => {
         const url =
           process.env.DATABASE_URL ??
-          "postgres://hydrox:hydrox@localhost:5432/hydrox";
+          "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
         return createDb(url);
       },
     },

@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:3000",
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

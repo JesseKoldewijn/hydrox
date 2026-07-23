@@ -2,50 +2,47 @@
 
 ## Compose services
 
-- `postgres` — primary DB (`/health` via `pg_isready`)
-- `redis` — pub/sub + future caches (`redis-cli ping`)
-- `localstack` — S3-compatible (`/_localstack/health` until S3 available)
-- `api` — Nest API (warmup entrypoint waits for deps, migrates, then starts)
-- `web` — Octane Vite (dev) or nginx static (prod)
+- `mysql` — primary DB (`mysqladmin ping`)
+- `app` — Nest serves tRPC + Octane (Vite middleware in dev, static SSG in prod)
 
-All services declare Compose `healthcheck`s. `api`/`web` use `depends_on: condition: service_healthy`.
+All services declare Compose `healthcheck`s. `app` uses `depends_on: condition: service_healthy`.
 
-## Health endpoints (API)
+## Health endpoints (app)
 
 | Path | Meaning |
 |------|---------|
 | `GET /health` | Liveness — process is up |
-| `GET /ready` | Readiness — Postgres + Redis reachable |
+| `GET /ready` | Readiness — MySQL reachable |
 | `GET /trpc/health.ping` | tRPC ping (protocol version) |
 
-Image `HEALTHCHECK` hits `/ready` (API) or `/` (web).
+Image `HEALTHCHECK` hits `/ready`.
 
 ## Warmup
 
 `docker/scripts/api-entrypoint.sh`:
 
-1. Wait for Postgres/Redis TCP (and best-effort S3)
+1. Wait for MySQL TCP
 2. Run `yarn workspace @hydrox/db migrate`
 3. `exec` the container CMD
 
 ## Probes / stack tests
 
 ```bash
-# Infra only (postgres/redis/s3) — assumes compose already up or brings it up
+# Infra only (mysql) — assumes compose already up or brings it up
 yarn test:stack:infra
 
-# Full dev stack including api + web HTTP
+# Full stack including app HTTP (same origin)
 yarn test:stack:full
 
-# Prod compose images
-yarn test:stack:prod          # HTTP-only probe (DB/S3 stay on the compose network)
+# Prod compose image
+yarn test:stack:prod          # HTTP-only probe (MySQL stays on the compose network)
 
 # Probe against already-running services
-yarn probe:stack              # postgres + redis + s3
-yarn probe:stack:full         # + api /health /ready + web
+yarn probe:stack              # mysql
+yarn probe:stack:full         # + /health /ready + SPA
 ```
 
-Agents: after Docker/infra changes run `yarn test:stack:infra` (or `full` when touching API/web images). Include `yarn probe:stack` in `ci:local` when infra is up.
+Agents: after Docker/infra changes run `yarn test:stack:infra` (or `full` when touching the app image). Include `yarn probe:stack` in `ci:local` when infra is up.
 
 ## Env
 
@@ -53,6 +50,6 @@ See `docker/.env.example`.
 
 ## Images
 
-Multi-stage Dockerfiles use `turbo prune --docker` for `@hydrox/api` and `@hydrox/web`.
+Single multi-stage Dockerfile (`docker/api.Dockerfile`) builds Octane into `apps/web/dist` and Nest into `apps/api/dist`. Nest serves both.
 
 Prod: `yarn docker:prod` → `docker/docker-compose.prod.yml`.

@@ -1,45 +1,43 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { NestFactory } from "@nestjs/core";
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from "@nestjs/platform-fastify";
+import { AppModule } from "./app.module.js";
 
-const API_URL = process.env.API_URL ?? "http://127.0.0.1:3001";
+describe("health endpoints", () => {
+  let app: NestFastifyApplication;
 
-async function fetchOrNull(url: string) {
-  try {
-    return await fetch(url, { signal: AbortSignal.timeout(2000) });
-  } catch {
-    return null;
-  }
-}
-
-/**
- * HTTP health/ready endpoints against a live API process.
- * Covered end-to-end by `yarn test:stack` when Compose brings api up.
- */
-describe("api health endpoints", () => {
-  it("GET /health returns liveness ok", async () => {
-    const res = await fetchOrNull(`${API_URL}/health`);
-    if (!res) {
-      console.warn(`API not reachable at ${API_URL} — skip`);
-      return;
-    }
-    expect(res.ok).toBe(true);
-    const body = (await res.json()) as { status: string; service: string };
-    expect(body.status).toBe("ok");
-    expect(body.service).toBe("hydrox-api");
+  beforeAll(async () => {
+    app = await NestFactory.create<NestFastifyApplication>(
+      AppModule,
+      new FastifyAdapter(),
+      { logger: false },
+    );
+    await app.init();
+    await app.getHttpAdapter().getInstance().ready();
   });
 
-  it("GET /ready reports postgres + redis", async () => {
-    const res = await fetchOrNull(`${API_URL}/ready`);
-    if (!res) {
-      console.warn(`API not reachable at ${API_URL} — skip`);
-      return;
-    }
-    expect(res.ok).toBe(true);
-    const body = (await res.json()) as {
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it("GET /health is ok", async () => {
+    const res = await app.inject({ method: "GET", url: "/health" });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { status: string };
+    expect(body.status).toBe("ok");
+  });
+
+  it("GET /ready reports mysql", async () => {
+    const res = await app.inject({ method: "GET", url: "/ready" });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as {
       status: string;
-      checks: { postgres: string; redis: string };
+      checks: { mysql: string };
     };
     expect(body.status).toBe("ready");
-    expect(body.checks.postgres).toBe("ok");
-    expect(body.checks.redis).toBe("ok");
+    expect(body.checks.mysql).toBe("ok");
   });
 });

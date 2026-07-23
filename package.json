@@ -7,8 +7,8 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "dev": "turbo run dev --parallel",
+    "build": "turbo run build --filter=@hydrox/web --filter=@hydrox/api...",
+    "dev": "yarn workspace @hydrox/api dev",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",

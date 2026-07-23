@@ -1,49 +1,61 @@
 import {
-  boolean,
-  integer,
-  jsonb,
-  pgTable,
+  char,
+  customType,
+  index,
+  int,
+  json,
+  mysqlTable,
   text,
   timestamp,
   uniqueIndex,
-  uuid,
   varchar,
-  index,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
+
+const longblob = customType<{ data: Buffer; driverData: Buffer }>({
+  dataType() {
+    return "longblob";
+  },
+});
+
+const idCol = () =>
+  char("id", { length: 36 })
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID());
 
 const timestamps = {
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 };
 
 const softDelete = {
-  deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  deletedById: uuid("deleted_by_id"),
+  deletedAt: timestamp("deleted_at"),
+  deletedById: char("deleted_by_id", { length: 36 }),
 };
 
-export const users = pgTable("users", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  email: varchar("email", { length: 320 }).notNull(),
-  username: varchar("username", { length: 64 }).notNull(),
-  displayName: varchar("display_name", { length: 120 }).notNull(),
-  avatarUrl: text("avatar_url"),
-  passwordHash: text("password_hash"),
-  ...timestamps,
-  ...softDelete,
-}, (t) => [
-  uniqueIndex("users_email_uidx").on(t.email),
-  uniqueIndex("users_username_uidx").on(t.username),
-]);
+export const users = mysqlTable(
+  "users",
+  {
+    id: idCol(),
+    email: varchar("email", { length: 320 }).notNull(),
+    username: varchar("username", { length: 64 }).notNull(),
+    displayName: varchar("display_name", { length: 120 }).notNull(),
+    avatarUrl: text("avatar_url"),
+    passwordHash: text("password_hash"),
+    ...timestamps,
+    ...softDelete,
+  },
+  (t) => [
+    uniqueIndex("users_email_uidx").on(t.email),
+    uniqueIndex("users_username_uidx").on(t.username),
+  ],
+);
 
-export const identities = pgTable(
+export const identities = mysqlTable(
   "identities",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    userId: uuid("user_id")
+    id: idCol(),
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
     provider: varchar("provider", { length: 32 }).notNull(),
@@ -58,39 +70,38 @@ export const identities = pgTable(
   ],
 );
 
-export const sessions = pgTable("sessions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const sessions = mysqlTable("sessions", {
+  id: idCol(),
+  userId: char("user_id", { length: 36 })
     .notNull()
     .references(() => users.id),
   tokenHash: text("token_hash").notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
   ...timestamps,
 });
 
-export const organizations = pgTable(
+export const organizations = mysqlTable(
   "organizations",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
+    id: idCol(),
     name: varchar("name", { length: 120 }).notNull(),
     slug: varchar("slug", { length: 48 }).notNull(),
-    workosOrganizationId: varchar("workos_organization_id", { length: 255 }),
-    version: integer("version").notNull().default(1),
-    updatedById: uuid("updated_by_id"),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
     ...timestamps,
     ...softDelete,
   },
   (t) => [uniqueIndex("organizations_slug_uidx").on(t.slug)],
 );
 
-export const organizationMemberships = pgTable(
+export const organizationMemberships = mysqlTable(
   "organization_memberships",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizationId: uuid("organization_id")
+    id: idCol(),
+    organizationId: char("organization_id", { length: 36 })
       .notNull()
       .references(() => organizations.id),
-    userId: uuid("user_id")
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
     role: varchar("role", { length: 32 }).notNull().default("member"),
@@ -102,33 +113,30 @@ export const organizationMemberships = pgTable(
   ],
 );
 
-export const workspaces = pgTable("workspaces", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id")
+export const workspaces = mysqlTable("workspaces", {
+  id: idCol(),
+  organizationId: char("organization_id", { length: 36 })
     .notNull()
     .references(() => organizations.id),
   name: varchar("name", { length: 120 }).notNull(),
   key: varchar("key", { length: 32 }).notNull(),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const workspaceMemberships = pgTable(
+export const workspaceMemberships = mysqlTable(
   "workspace_memberships",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workspaceId: uuid("workspace_id")
+    id: idCol(),
+    workspaceId: char("workspace_id", { length: 36 })
       .notNull()
       .references(() => workspaces.id),
-    userId: uuid("user_id")
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
     role: varchar("role", { length: 32 }).notNull().default("member"),
-    workosDirectoryGroupId: varchar("workos_directory_group_id", {
-      length: 255,
-    }),
     ...timestamps,
     ...softDelete,
   },
@@ -137,22 +145,22 @@ export const workspaceMemberships = pgTable(
   ],
 );
 
-export const projects = pgTable(
+export const projects = mysqlTable(
   "projects",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    workspaceId: uuid("workspace_id")
+    id: idCol(),
+    workspaceId: char("workspace_id", { length: 36 })
       .notNull()
       .references(() => workspaces.id),
-    organizationId: uuid("organization_id")
+    organizationId: char("organization_id", { length: 36 })
       .notNull()
       .references(() => organizations.id),
     name: varchar("name", { length: 120 }).notNull(),
     key: varchar("key", { length: 16 }).notNull(),
     description: text("description"),
-    issueCounter: integer("issue_counter").notNull().default(0),
-    version: integer("version").notNull().default(1),
-    updatedById: uuid("updated_by_id"),
+    issueCounter: int("issue_counter").notNull().default(0),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
     ...timestamps,
     ...softDelete,
   },
@@ -161,14 +169,14 @@ export const projects = pgTable(
   ],
 );
 
-export const projectMemberships = pgTable(
+export const projectMemberships = mysqlTable(
   "project_memberships",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
       .notNull()
       .references(() => projects.id),
-    userId: uuid("user_id")
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
     role: varchar("role", { length: 32 }).notNull().default("member"),
@@ -180,31 +188,39 @@ export const projectMemberships = pgTable(
   ],
 );
 
-export const customRoles = pgTable("custom_roles", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id")
+export const customRoles = mysqlTable("custom_roles", {
+  id: idCol(),
+  organizationId: char("organization_id", { length: 36 })
     .notNull()
     .references(() => organizations.id),
   name: varchar("name", { length: 80 }).notNull(),
-  capabilities: jsonb("capabilities").$type<string[]>().notNull().default([]),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  capabilities: json("capabilities")
+    .$type<string[]>()
+    .notNull()
+    .default(sql`(JSON_ARRAY())`),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const projectPermissionOverrides = pgTable(
+export const projectPermissionOverrides = mysqlTable(
   "project_permission_overrides",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
       .notNull()
       .references(() => projects.id),
-    userId: uuid("user_id")
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
-    capabilities: jsonb("capabilities").$type<string[]>().notNull().default([]),
-    customRoleId: uuid("custom_role_id").references(() => customRoles.id),
+    capabilities: json("capabilities")
+      .$type<string[]>()
+      .notNull()
+      .default(sql`(JSON_ARRAY())`),
+    customRoleId: char("custom_role_id", { length: 36 }).references(
+      () => customRoles.id,
+    ),
     ...timestamps,
   },
   (t) => [
@@ -212,92 +228,96 @@ export const projectPermissionOverrides = pgTable(
   ],
 );
 
-export const workflowStatuses = pgTable("workflow_statuses", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
+export const workflowStatuses = mysqlTable("workflow_statuses", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
     .notNull()
     .references(() => projects.id),
   name: varchar("name", { length: 80 }).notNull(),
   category: varchar("category", { length: 32 }).notNull(),
-  position: integer("position").notNull().default(0),
+  position: int("position").notNull().default(0),
   color: varchar("color", { length: 32 }),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const initiatives = pgTable("initiatives", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  organizationId: uuid("organization_id")
+export const initiatives = mysqlTable("initiatives", {
+  id: idCol(),
+  organizationId: char("organization_id", { length: 36 })
     .notNull()
     .references(() => organizations.id),
-  projectId: uuid("project_id").references(() => projects.id),
+  projectId: char("project_id", { length: 36 }).references(() => projects.id),
   scope: varchar("scope", { length: 32 }).notNull(),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const epics = pgTable("epics", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
+export const epics = mysqlTable("epics", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
     .notNull()
     .references(() => projects.id),
-  initiativeId: uuid("initiative_id").references(() => initiatives.id),
+  initiativeId: char("initiative_id", { length: 36 }).references(
+    () => initiatives.id,
+  ),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
-  statusId: uuid("status_id").references(() => workflowStatuses.id),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  statusId: char("status_id", { length: 36 }).references(
+    () => workflowStatuses.id,
+  ),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const sprints = pgTable("sprints", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
+export const sprints = mysqlTable("sprints", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
     .notNull()
     .references(() => projects.id),
   name: varchar("name", { length: 120 }).notNull(),
   goal: text("goal"),
-  startDate: timestamp("start_date", { withTimezone: true }),
-  endDate: timestamp("end_date", { withTimezone: true }),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
   state: varchar("state", { length: 32 }).notNull().default("future"),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const issues = pgTable(
+export const issues = mysqlTable(
   "issues",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    projectId: uuid("project_id")
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
       .notNull()
       .references(() => projects.id),
-    epicId: uuid("epic_id").references(() => epics.id),
-    parentIssueId: uuid("parent_issue_id"),
+    epicId: char("epic_id", { length: 36 }).references(() => epics.id),
+    parentIssueId: char("parent_issue_id", { length: 36 }),
     key: varchar("key", { length: 32 }).notNull(),
     type: varchar("type", { length: 32 }).notNull(),
     title: varchar("title", { length: 500 }).notNull(),
     description: text("description"),
-    statusId: uuid("status_id")
+    statusId: char("status_id", { length: 36 })
       .notNull()
       .references(() => workflowStatuses.id),
-    assigneeId: uuid("assignee_id").references(() => users.id),
-    reporterId: uuid("reporter_id")
+    assigneeId: char("assignee_id", { length: 36 }).references(() => users.id),
+    reporterId: char("reporter_id", { length: 36 })
       .notNull()
       .references(() => users.id),
-    sprintId: uuid("sprint_id").references(() => sprints.id),
+    sprintId: char("sprint_id", { length: 36 }).references(() => sprints.id),
     backlogRank: varchar("backlog_rank", { length: 64 }).notNull().default("m"),
-    storyPoints: integer("story_points"),
-    version: integer("version").notNull().default(1),
-    updatedById: uuid("updated_by_id"),
+    storyPoints: int("story_points"),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
     ...timestamps,
     ...softDelete,
   },
@@ -308,91 +328,91 @@ export const issues = pgTable(
   ],
 );
 
-export const issueLinks = pgTable("issue_links", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  sourceIssueId: uuid("source_issue_id")
+export const issueLinks = mysqlTable("issue_links", {
+  id: idCol(),
+  sourceIssueId: char("source_issue_id", { length: 36 })
     .notNull()
     .references(() => issues.id),
-  targetIssueId: uuid("target_issue_id")
+  targetIssueId: char("target_issue_id", { length: 36 })
     .notNull()
     .references(() => issues.id),
   linkType: varchar("link_type", { length: 32 }).notNull(),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const comments = pgTable("comments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  issueId: uuid("issue_id")
+export const comments = mysqlTable("comments", {
+  id: idCol(),
+  issueId: char("issue_id", { length: 36 })
     .notNull()
     .references(() => issues.id),
-  authorId: uuid("author_id")
+  authorId: char("author_id", { length: 36 })
     .notNull()
     .references(() => users.id),
   body: text("body").notNull(),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const attachments = pgTable("attachments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  issueId: uuid("issue_id")
+export const attachments = mysqlTable("attachments", {
+  id: idCol(),
+  issueId: char("issue_id", { length: 36 })
     .notNull()
     .references(() => issues.id),
-  uploadedById: uuid("uploaded_by_id")
+  uploadedById: char("uploaded_by_id", { length: 36 })
     .notNull()
     .references(() => users.id),
   fileName: varchar("file_name", { length: 255 }).notNull(),
   contentType: varchar("content_type", { length: 128 }).notNull(),
-  sizeBytes: integer("size_bytes").notNull(),
-  s3Key: text("s3_key").notNull(),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  sizeBytes: int("size_bytes").notNull(),
+  data: longblob("data").notNull(),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const savedFilters = pgTable("saved_filters", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  projectId: uuid("project_id")
+export const savedFilters = mysqlTable("saved_filters", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
     .notNull()
     .references(() => projects.id),
-  ownerId: uuid("owner_id")
+  ownerId: char("owner_id", { length: 36 })
     .notNull()
     .references(() => users.id),
   name: varchar("name", { length: 120 }).notNull(),
-  query: jsonb("query").$type<Record<string, unknown>>().notNull(),
-  version: integer("version").notNull().default(1),
-  updatedById: uuid("updated_by_id"),
+  query: json("query").$type<Record<string, unknown>>().notNull(),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
   ...softDelete,
 });
 
-export const notifications = pgTable("notifications", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const notifications = mysqlTable("notifications", {
+  id: idCol(),
+  userId: char("user_id", { length: 36 })
     .notNull()
     .references(() => users.id),
-  organizationId: uuid("organization_id")
+  organizationId: char("organization_id", { length: 36 })
     .notNull()
     .references(() => organizations.id),
   type: varchar("type", { length: 64 }).notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   body: text("body"),
   entityType: varchar("entity_type", { length: 64 }),
-  entityId: uuid("entity_id"),
-  readAt: timestamp("read_at", { withTimezone: true }),
+  entityId: char("entity_id", { length: 36 }),
+  readAt: timestamp("read_at"),
   ...timestamps,
   ...softDelete,
 });
 
-export const pushSubscriptions = pgTable("push_subscriptions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
+export const pushSubscriptions = mysqlTable("push_subscriptions", {
+  id: idCol(),
+  userId: char("user_id", { length: 36 })
     .notNull()
     .references(() => users.id),
   endpoint: text("endpoint").notNull(),
@@ -401,37 +421,33 @@ export const pushSubscriptions = pgTable("push_subscriptions", {
   ...timestamps,
 });
 
-export const auditEvents = pgTable(
+export const auditEvents = mysqlTable(
   "audit_events",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    organizationId: uuid("organization_id")
+    id: idCol(),
+    organizationId: char("organization_id", { length: 36 })
       .notNull()
       .references(() => organizations.id),
-    actorId: uuid("actor_id"),
+    actorId: char("actor_id", { length: 36 }),
     action: varchar("action", { length: 64 }).notNull(),
     entityType: varchar("entity_type", { length: 64 }).notNull(),
-    entityId: uuid("entity_id"),
-    metadata: jsonb("metadata").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    entityId: char("entity_id", { length: 36 }),
+    metadata: json("metadata").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [index("audit_events_created_idx").on(t.createdAt)],
 );
 
-export const syncIdempotency = pgTable(
+export const syncIdempotency = mysqlTable(
   "sync_idempotency",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    idempotencyKey: uuid("idempotency_key").notNull(),
-    userId: uuid("user_id")
+    id: idCol(),
+    idempotencyKey: char("idempotency_key", { length: 36 }).notNull(),
+    userId: char("user_id", { length: 36 })
       .notNull()
       .references(() => users.id),
-    result: jsonb("result").$type<Record<string, unknown>>(),
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    result: json("result").$type<Record<string, unknown>>(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("sync_idempotency_uidx").on(t.userId, t.idempotencyKey),

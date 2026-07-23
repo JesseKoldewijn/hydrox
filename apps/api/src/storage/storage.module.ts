@@ -1,56 +1,65 @@
-import { Module } from "@nestjs/common";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { Injectable } from "@nestjs/common";
+import { Inject, Injectable, Module } from "@nestjs/common";
+import { and, eq, isNull } from "drizzle-orm";
+import { attachments, type HydroxDb } from "@hydrox/db";
+import { DB } from "../db/db.module.js";
+import { DbModule } from "../db/db.module.js";
 
 @Injectable()
 export class StorageService {
-  private client: S3Client;
-  private bucket: string;
+  constructor(@Inject(DB) private readonly db: HydroxDb) {}
 
-  constructor() {
-    const endpoint = process.env.S3_ENDPOINT;
-    this.bucket = process.env.S3_BUCKET ?? "hydrox";
-    this.client = new S3Client({
-      region: process.env.S3_REGION ?? "us-east-1",
-      endpoint,
-      forcePathStyle: Boolean(endpoint),
-      credentials: {
-        accessKeyId: process.env.S3_ACCESS_KEY_ID ?? "test",
-        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY ?? "test",
-      },
-    });
-  }
-
-  objectKey(parts: {
-    organizationId: string;
-    projectId: string;
+  async storeAttachment(input: {
     issueId: string;
+    uploadedById: string;
     fileName: string;
+    contentType: string;
+    sizeBytes: number;
+    data: Buffer;
   }) {
-    const safe = parts.fileName.replace(/[^a-zA-Z0-9._-]/g, "_");
-    return `org/${parts.organizationId}/project/${parts.projectId}/issue/${parts.issueId}/${crypto.randomUUID()}-${safe}`;
+    const id = crypto.randomUUID();
+    await this.db.insert(attachments).values({
+      id,
+      issueId: input.issueId,
+      uploadedById: input.uploadedById,
+      fileName: input.fileName,
+      contentType: input.contentType,
+      sizeBytes: input.sizeBytes,
+      data: input.data,
+      updatedById: input.uploadedById,
+    });
+    const [row] = await this.db
+      .select({
+        id: attachments.id,
+        issueId: attachments.issueId,
+        uploadedById: attachments.uploadedById,
+        fileName: attachments.fileName,
+        contentType: attachments.contentType,
+        sizeBytes: attachments.sizeBytes,
+        version: attachments.version,
+        updatedById: attachments.updatedById,
+        createdAt: attachments.createdAt,
+        updatedAt: attachments.updatedAt,
+        deletedAt: attachments.deletedAt,
+        deletedById: attachments.deletedById,
+      })
+      .from(attachments)
+      .where(eq(attachments.id, id))
+      .limit(1);
+    return row!;
   }
 
-  async presignUpload(key: string, contentType: string) {
-    const command = new PutObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-      ContentType: contentType,
-    });
-    return getSignedUrl(this.client, command, { expiresIn: 900 });
-  }
-
-  async presignDownload(key: string) {
-    const command = new GetObjectCommand({
-      Bucket: this.bucket,
-      Key: key,
-    });
-    return getSignedUrl(this.client, command, { expiresIn: 900 });
+  async getAttachment(id: string) {
+    const [row] = await this.db
+      .select()
+      .from(attachments)
+      .where(and(eq(attachments.id, id), isNull(attachments.deletedAt)))
+      .limit(1);
+    return row ?? null;
   }
 }
 
 @Module({
+  imports: [DbModule],
   providers: [StorageService],
   exports: [StorageService],
 })

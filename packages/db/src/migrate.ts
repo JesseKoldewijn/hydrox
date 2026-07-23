@@ -1,22 +1,22 @@
-import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
-import postgres from "postgres";
+import { drizzle } from "drizzle-orm/mysql2";
+import { migrate } from "drizzle-orm/mysql2/migrator";
+import mysql from "mysql2/promise";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
 const url =
-  process.env.DATABASE_URL ?? "postgres://hydrox:hydrox@localhost:5432/hydrox";
+  process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
 
 async function main() {
-  const client = postgres(url, { max: 1 });
-  const db = drizzle(client);
+  const connection = await mysql.createConnection(url);
+  const db = drizzle(connection);
   const migrationsFolder = path.join(
     path.dirname(fileURLToPath(import.meta.url)),
     "..",
     "drizzle",
   );
   await migrate(db, { migrationsFolder });
-  await client.end();
+  await connection.end();
   console.log("Migrations applied");
 }
 

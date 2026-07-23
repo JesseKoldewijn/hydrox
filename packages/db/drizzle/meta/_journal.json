@@ -1,19 +1,12 @@
 {
   "version": "7",
-  "dialect": "postgresql",
+  "dialect": "mysql",
   "entries": [
     {
       "idx": 0,
-      "version": "7",
-      "when": 1784826033278,
-      "tag": "0000_wakeful_randall_flagg",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1784836500000,
-      "tag": "0001_issue_key_per_project",
+      "version": "5",
+      "when": 1784841887826,
+      "tag": "0000_woozy_gorgon",
       "breakpoints": true
     }
   ]

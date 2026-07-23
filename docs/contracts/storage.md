@@ -1,10 +1,10 @@
 # Storage
 
-S3-compatible object storage.
+Attachment bytes are stored in MySQL (`attachments.data` LONGBLOB).
 
-- Local/CI: LocalStack / openstack port (`S3_ENDPOINT`)
-- Prod: AWS S3
+Upload/download via tRPC:
 
-Key layout: `org/{orgId}/project/{projectId}/issue/{issueId}/{uuid}-{filename}`
+- `work.uploadAttachment` — base64 payload + metadata
+- `work.attachmentDownload` — returns base64 + content type
 
-Presigned upload/download via API.
+No external object store (S3 / LocalStack) in the default stack.

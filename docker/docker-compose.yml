@@ -1,55 +1,37 @@
 services:
-  postgres:
-    image: postgres:16-alpine
+  mysql:
+    image: mysql:8.4
     environment:
-      POSTGRES_USER: hydrox
-      POSTGRES_PASSWORD: hydrox
-      POSTGRES_DB: hydrox
+      MYSQL_ROOT_PASSWORD: hydrox
+      MYSQL_DATABASE: hydrox
+      MYSQL_USER: hydrox
+      MYSQL_PASSWORD: hydrox
     ports:
-      - "5432:5432"
+      - "3306:3306"
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./init:/docker-entrypoint-initdb.d:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U hydrox -d hydrox"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 5s
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
-      start_period: 5s
-
-  localstack:
-    image: localstack/localstack:4.3
-    ports:
-      - "4566:4566"
-    environment:
-      SERVICES: s3
-      DEFAULT_REGION: us-east-1
-    volumes:
-      - localstack:/var/lib/localstack
-      - ./localstack-init:/etc/localstack/init/ready.d:ro
+      - mysqldata:/var/lib/mysql
+    command:
+      [
+        "--character-set-server=utf8mb4",
+        "--collation-server=utf8mb4_unicode_ci",
+      ]
     healthcheck:
       test:
         [
-          "CMD-SHELL",
-          "curl -fsS http://localhost:4566/_localstack/health | grep -q '\"s3\": \"\\(available\\|running\\)\"' || exit 1",
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "127.0.0.1",
+          "-uhydrox",
+          "-phydrox",
         ]
-      interval: 10s
+      interval: 5s
       timeout: 5s
-      retries: 12
+      retries: 20
       start_period: 15s
 
-  api:
+  app:
     build:
       context: ..
       dockerfile: docker/api.Dockerfile
@@ -57,25 +39,18 @@ services:
     env_file:
       - .env.example
     environment:
-      DATABASE_URL: postgres://hydrox:hydrox@postgres:5432/hydrox
-      REDIS_URL: redis://redis:6379
-      S3_ENDPOINT: http://localstack:4566
-      S3_BUCKET: hydrox
-      S3_ACCESS_KEY_ID: test
-      S3_SECRET_ACCESS_KEY: test
-      WEB_ORIGIN: http://localhost:5173
-      API_PORT: 3001
+      DATABASE_URL: mysql://hydrox:hydrox@mysql:3306/hydrox
+      WEB_ORIGIN: http://localhost:3000
+      PORT: 3000
+      API_PORT: 3000
+      NODE_ENV: development
     ports:
-      - "3001:3001"
+      - "3000:3000"
     volumes:
       - ../:/app
       - /app/node_modules
     depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      localstack:
+      mysql:
         condition: service_healthy
     healthcheck:
       test:
@@ -83,45 +58,12 @@ services:
           "CMD",
           "node",
           "-e",
-          "fetch('http://127.0.0.1:3001/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+          "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
         ]
       interval: 10s
       timeout: 5s
       retries: 12
-      start_period: 60s
-
-  web:
-    build:
-      context: ..
-      dockerfile: docker/web.Dockerfile
-      target: dev
-    environment:
-      # Browser → host-published API (not docker DNS)
-      VITE_API_URL: http://localhost:3001
-      # Vite server-side /trpc proxy target (compose network)
-      API_URL: http://api:3001
-    ports:
-      - "5173:5173"
-    volumes:
-      - ../:/app
-      - /app/node_modules
-    depends_on:
-      api:
-        condition: service_healthy
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://127.0.0.1:5173/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 40s
-    command: yarn workspace @hydrox/web dev --host 0.0.0.0 --port 5173
+      start_period: 90s
 
 volumes:
-  pgdata:
-  localstack:
+  mysqldata:

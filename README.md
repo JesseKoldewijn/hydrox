@@ -1,27 +1,26 @@
 # Hydrox
 
-Jira-style work management: NestJS API + Octane web client, tRPC end-to-end, Dexie local-first sync.
+Jira-style work management: NestJS (tRPC + Octane SPA) with Dexie local-first sync and MySQL.
 
 ## Stack
 
 - Yarn Berry (`nodeLinker: node-modules`) + Turborepo
-- `apps/api` — Nest 11 + Fastify + `@nest-native/trpc`
+- `apps/api` — Nest 11 + Fastify + `@nest-native/trpc` (serves SPA)
 - `apps/web` — Octane + Tailwind CSS 4 + Dexie
-- Postgres + Drizzle, Redis pub/sub, S3 (LocalStack locally)
+- MySQL + Drizzle (attachments stored as LONGBLOB)
 
 ## Quick start
 
 ```bash
 cp docker/.env.example docker/.env
 yarn install
-yarn docker:up   # postgres, redis, localstack (+ optional api/web)
-yarn workspace @hydrox/db generate
+yarn docker:up   # mysql (+ optional Nest app)
 yarn workspace @hydrox/db migrate
-yarn dev
+yarn dev         # Nest on :3000 with Vite HMR middleware
 ```
 
-- Web: http://localhost:5173
-- API: http://localhost:3001/trpc
+- App (SPA + API): http://localhost:3000
+- tRPC: http://localhost:3000/trpc
 
 ## Agent / CI
 

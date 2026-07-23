@@ -9,49 +9,28 @@ jobs:
   validate:
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:16-alpine
+      mysql:
+        image: mysql:8.4
         env:
-          POSTGRES_USER: hydrox
-          POSTGRES_PASSWORD: hydrox
-          POSTGRES_DB: hydrox
-        ports: ["5432:5432"]
+          MYSQL_ROOT_PASSWORD: hydrox
+          MYSQL_DATABASE: hydrox
+          MYSQL_USER: hydrox
+          MYSQL_PASSWORD: hydrox
+        ports: ["3306:3306"]
         options: >-
-          --health-cmd "pg_isready -U hydrox -d hydrox"
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uhydrox -phydrox"
           --health-interval 5s
           --health-timeout 5s
-          --health-retries 10
-      redis:
-        image: redis:7-alpine
-        ports: ["6379:6379"]
-        options: >-
-          --health-cmd "redis-cli ping"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
-      localstack:
-        image: localstack/localstack:4.3
-        ports: ["4566:4566"]
-        env:
-          SERVICES: s3
-          DEFAULT_REGION: us-east-1
-        options: >-
-          --health-cmd "curl -fsS http://localhost:4566/_localstack/health || exit 1"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 12
+          --health-retries 20
     env:
-      DATABASE_URL: postgres://hydrox:hydrox@localhost:5432/hydrox
-      REDIS_URL: redis://localhost:6379
-      S3_ENDPOINT: http://127.0.0.1:4566
-      S3_BUCKET: hydrox
-      S3_ACCESS_KEY_ID: test
-      S3_SECRET_ACCESS_KEY: test
-      S3_REGION: us-east-1
-      API_PORT: 3001
-      API_URL: http://127.0.0.1:3001
-      WEB_ORIGIN: http://127.0.0.1:5173
+      DATABASE_URL: mysql://hydrox:hydrox@127.0.0.1:3306/hydrox
+      PORT: 3000
+      API_PORT: 3000
+      APP_URL: http://127.0.0.1:3000
+      API_URL: http://127.0.0.1:3000
+      WEB_ORIGIN: http://127.0.0.1:3000
       COOKIE_SECRET: hydrox-ci-cookie-secret
+      NODE_ENV: production
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -67,40 +46,32 @@ jobs:
         run: yarn typecheck
       - name: Unit tests
         run: yarn test
+      - name: Build
+        run: yarn build
       - name: Migrate database
         run: yarn db:migrate
       - name: Integration tests
         run: yarn test:integration
       - name: Install Playwright Chromium
         run: yarn workspace @hydrox/web exec playwright install --with-deps chromium
-      - name: Start API
+      - name: Start app
         run: |
-          yarn workspace @hydrox/api start > /tmp/hydrox-api.log 2>&1 &
-          echo $! > /tmp/hydrox-api.pid
-      - name: Start web
-        run: |
-          yarn workspace @hydrox/web dev --host 127.0.0.1 --port 5173 > /tmp/hydrox-web.log 2>&1 &
-          echo $! > /tmp/hydrox-web.pid
-      - name: Wait for API and web
-        run: |
-          bash docker/scripts/wait-for-http.sh http://127.0.0.1:3001/ready 60 2
-          bash docker/scripts/wait-for-http.sh http://127.0.0.1:5173 60 2
+          yarn workspace @hydrox/api start > /tmp/hydrox-app.log 2>&1 &
+          echo $! > /tmp/hydrox-app.pid
+      - name: Wait for app
+        run: bash docker/scripts/wait-for-http.sh http://127.0.0.1:3000/ready 90 2
       - name: E2E tests
         run: yarn test:e2e
         env:
-          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5173
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:3000
       - name: Dump server logs on failure
         if: failure()
         run: |
-          echo '--- API log ---'
-          cat /tmp/hydrox-api.log 2>/dev/null || true
-          echo '--- web log ---'
-          cat /tmp/hydrox-web.log 2>/dev/null || true
+          echo '--- app log ---'
+          cat /tmp/hydrox-app.log 2>/dev/null || true
       - name: Stop servers
         if: always()
-        run: |
-          kill "$(cat /tmp/hydrox-api.pid 2>/dev/null)" 2>/dev/null || true
-          kill "$(cat /tmp/hydrox-web.pid 2>/dev/null)" 2>/dev/null || true
+        run: kill "$(cat /tmp/hydrox-app.pid 2>/dev/null)" 2>/dev/null || true
 
   docker:
     runs-on: ubuntu-latest
@@ -114,18 +85,11 @@ jobs:
         run: corepack enable
       - name: Install
         run: yarn install --immutable
-      - name: Build API image
-        run: docker build -f docker/api.Dockerfile --target runner -t hydrox-api .
-      - name: Build web image
-        run: docker build -f docker/web.Dockerfile --target runner -t hydrox-web .
+      - name: Build app image
+        run: docker build -f docker/api.Dockerfile --target runner -t hydrox-app .
       - name: Stack probe (prod compose)
         run: yarn test:stack:prod
         env:
-          DATABASE_URL: postgres://hydrox:hydrox@localhost:5432/hydrox
-          REDIS_URL: redis://localhost:6379
-          S3_ENDPOINT: http://localhost:4566
-          S3_BUCKET: hydrox
-          S3_ACCESS_KEY_ID: test
-          S3_SECRET_ACCESS_KEY: test
-          API_URL: http://127.0.0.1:3001
-          WEB_URL: http://127.0.0.1:8080
+          APP_URL: http://127.0.0.1:3000
+          API_URL: http://127.0.0.1:3000
+          WEB_URL: http://127.0.0.1:3000

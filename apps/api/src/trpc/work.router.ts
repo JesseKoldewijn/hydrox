@@ -368,9 +368,11 @@ export class WorkRouter {
       fileName: z.string().min(1),
       contentType: z.string().min(1),
       sizeBytes: z.number().int().positive(),
+      /** Base64-encoded file bytes */
+      dataBase64: z.string().min(1),
     }),
   })
-  async prepareAttachmentUpload(
+  async uploadAttachment(
     @Input()
     input: {
       issueId: string;
@@ -379,6 +381,7 @@ export class WorkRouter {
       fileName: string;
       contentType: string;
       sizeBytes: number;
+      dataBase64: string;
     },
     @TrpcContext() ctx: Ctx,
   ) {
@@ -388,26 +391,35 @@ export class WorkRouter {
       input.projectId,
       "attachments.manage",
     );
-    const key = this.storage.objectKey(input);
-    const uploadUrl = await this.storage.presignUpload(key, input.contentType);
-    const meta = await this.work.createAttachmentMeta({
+    const data = Buffer.from(input.dataBase64, "base64");
+    if (data.length !== input.sizeBytes) {
+      throw new Error("SIZE_MISMATCH");
+    }
+    const meta = await this.storage.storeAttachment({
       issueId: input.issueId,
       uploadedById: ctx.user.id,
       fileName: input.fileName,
       contentType: input.contentType,
       sizeBytes: input.sizeBytes,
-      s3Key: key,
+      data,
     });
-    return { attachment: meta, uploadUrl };
+    return { attachment: meta };
   }
 
-  @Query({ input: z.object({ key: z.string().min(1) }) })
-  async attachmentDownloadUrl(
-    @Input() input: { key: string },
+  @Query({ input: z.object({ attachmentId: z.string().uuid() }) })
+  async attachmentDownload(
+    @Input() input: { attachmentId: string },
     @TrpcContext() ctx: Ctx,
   ) {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
-    return { url: await this.storage.presignDownload(input.key) };
+    const row = await this.storage.getAttachment(input.attachmentId);
+    if (!row) throw new Error("NOT_FOUND");
+    return {
+      fileName: row.fileName,
+      contentType: row.contentType,
+      sizeBytes: row.sizeBytes,
+      dataBase64: Buffer.from(row.data).toString("base64"),
+    };
   }
 
   @Query({ input: z.object({ organizationId: z.string().uuid() }) })

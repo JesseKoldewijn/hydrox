@@ -11,14 +11,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
-    proxy: {
-      "/trpc": {
-        target: process.env.API_URL ?? "http://localhost:3001",
-        changeOrigin: true,
-        ws: true,
-      },
-    },
+    // When Nest mounts Vite in middleware mode, HMR attaches to the Nest port.
+    port: 3000,
+    strictPort: false,
   },
   build: {
     outDir: "dist",
