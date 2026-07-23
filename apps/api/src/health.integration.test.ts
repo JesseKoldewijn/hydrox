@@ -2,13 +2,21 @@ import { describe, expect, it } from "vitest";
 
 const API_URL = process.env.API_URL ?? "http://127.0.0.1:3001";
 
+async function fetchOrNull(url: string) {
+  try {
+    return await fetch(url, { signal: AbortSignal.timeout(2000) });
+  } catch {
+    return null;
+  }
+}
+
 /**
  * HTTP health/ready endpoints against a live API process.
  * Covered end-to-end by `yarn test:stack` when Compose brings api up.
  */
 describe("api health endpoints", () => {
   it("GET /health returns liveness ok", async () => {
-    const res = await fetch(`${API_URL}/health`).catch(() => null);
+    const res = await fetchOrNull(`${API_URL}/health`);
     if (!res) {
       console.warn(`API not reachable at ${API_URL} — skip`);
       return;
@@ -20,7 +28,7 @@ describe("api health endpoints", () => {
   });
 
   it("GET /ready reports postgres + redis", async () => {
-    const res = await fetch(`${API_URL}/ready`).catch(() => null);
+    const res = await fetchOrNull(`${API_URL}/ready`);
     if (!res) {
       console.warn(`API not reachable at ${API_URL} — skip`);
       return;

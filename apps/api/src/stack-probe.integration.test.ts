@@ -47,7 +47,14 @@ describe("stack probe", () => {
 
   it("probes api health/ready when API is reachable", async () => {
     const apiUrl = process.env.API_URL ?? "http://127.0.0.1:3001";
-    const health = await fetch(`${apiUrl}/health`).catch(() => null);
+    let health: Response | null = null;
+    try {
+      health = await fetch(`${apiUrl}/health`, {
+        signal: AbortSignal.timeout(2000),
+      });
+    } catch {
+      health = null;
+    }
     if (!health?.ok) {
       console.warn(`API not reachable at ${apiUrl}/health — skip HTTP probes`);
       return;
