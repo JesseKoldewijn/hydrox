@@ -1,0 +1,36 @@
+@import "@hydrox/ui/globals.css";
+
+.hydrox-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, color-mix(in oklab, var(--primary) 18%, transparent), transparent),
+    radial-gradient(900px 500px at 100% 0%, color-mix(in oklab, var(--secondary) 55%, transparent), transparent),
+    var(--background);
+}
+
+.hydrox-brand {
+  font-family: var(--font-display);
+  letter-spacing: -0.03em;
+}
+
+.board-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.issue-card {
+  background: var(--card);
+  color: var(--card-foreground);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 0.75rem;
+  cursor: grab;
+}
+
+.issue-card:active {
+  cursor: grabbing;
+}

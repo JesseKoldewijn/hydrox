@@ -1,0 +1,33 @@
+{
+  "name": "hydrox",
+  "private": true,
+  "packageManager": "yarn@4.17.1",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev --parallel",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e --filter=@hydrox/web",
+    "test:integration": "turbo run test:integration --filter=@hydrox/api",
+    "db:generate": "yarn workspace @hydrox/db generate",
+    "db:migrate": "yarn workspace @hydrox/db migrate",
+    "docker:up": "docker compose -f docker/docker-compose.yml up -d",
+    "docker:down": "docker compose -f docker/docker-compose.yml down",
+    "docker:prod": "docker compose -f docker/docker-compose.prod.yml up -d --build",
+    "validate": "yarn lint && yarn typecheck && yarn test",
+    "ci:local": "yarn validate && yarn test:integration"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hydrox
+      POSTGRES_PASSWORD: hydrox
+      POSTGRES_DB: hydrox
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hydrox -d hydrox"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:4.3
+    environment:
+      SERVICES: s3
+      DEFAULT_REGION: us-east-1
+    volumes:
+      - ./localstack-init:/etc/localstack/init/ready.d:ro
+
+  api:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+      target: runner
+    environment:
+      DATABASE_URL: postgres://hydrox:hydrox@postgres:5432/hydrox
+      REDIS_URL: redis://redis:6379
+      S3_ENDPOINT: http://localstack:4566
+      S3_BUCKET: hydrox
+      S3_ACCESS_KEY_ID: test
+      S3_SECRET_ACCESS_KEY: test
+      WEB_ORIGIN: http://localhost:8080
+      COOKIE_SECRET: change-me-in-prod
+      API_PORT: 3001
+    ports:
+      - "3001:3001"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/web.Dockerfile
+      target: runner
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
+
+volumes:
+  pgdata:

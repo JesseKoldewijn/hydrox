@@ -1,0 +1,42 @@
+{
+  "name": "@hydrox/web",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && tsx scripts/prerender.ts",
+    "preview": "vite preview",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run --config vitest.config.ts",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@hydrox/contracts": "workspace:*",
+    "@hydrox/domain": "workspace:*",
+    "@hydrox/sync": "workspace:*",
+    "@hydrox/trpc": "workspace:*",
+    "@hydrox/ui": "workspace:*",
+    "@octanejs/base-ui": "^0.1.11",
+    "@octanejs/dexie": "^0.1.6",
+    "@octanejs/i18next": "^0.1.8",
+    "@octanejs/vite-plugin": "^0.1.13",
+    "@trpc/client": "^11.4.3",
+    "@trpc/server": "^11.4.3",
+    "dexie": "^4.0.11",
+    "i18next": "^26.2.0",
+    "octane": "^0.1.13",
+    "superjson": "^2.2.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.53.1",
+    "@tailwindcss/vite": "^4.1.11",
+    "@types/node": "^22.15.32",
+    "tailwindcss": "^4.1.11",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vite": "^8.0.16",
+    "vitest": "^3.2.4"
+  }
+}
