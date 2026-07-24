@@ -1,0 +1,126 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-panel: var(--panel);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --font-sans: "Manrope", "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-display: "Manrope", "Segoe UI", sans-serif;
+  --radius-md: 0.375rem;
+  --radius-sm: 0.25rem;
+}
+
+/* Cool neutrals + indigo accent — surfaces stay in one family per theme */
+:root {
+  color-scheme: light;
+  --background: #f3f4f7;
+  --foreground: #12141a;
+  --primary: #4f5bc4;
+  --primary-foreground: #f7f8ff;
+  --secondary: #e8eaef;
+  --secondary-foreground: #12141a;
+  --muted: #e4e6ec;
+  --muted-foreground: #4f5665;
+  --destructive: #d93a40;
+  --destructive-foreground: #ffffff;
+  --border: #cfd3dc;
+  --input: #ffffff;
+  --ring: #4f5bc4;
+  --card: #ffffff;
+  --card-foreground: #12141a;
+  --accent: #4f5bc4;
+  --accent-foreground: #f7f8ff;
+  --panel: #ffffff;
+  --sidebar: #e9ebf0;
+  --sidebar-foreground: #12141a;
+  --sidebar-border: #c8ccd6;
+  --sidebar-width: 14.5rem;
+  --sidebar-width-collapsed: 4.25rem;
+  --shadow-sm: 0 1px 2px color-mix(in oklab, #12141a 6%, transparent);
+  --shadow-md: 0 8px 24px color-mix(in oklab, #12141a 10%, transparent);
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #0e0f12;
+  --foreground: #eef0f4;
+  --primary: #7d7cff;
+  --primary-foreground: #0b0b14;
+  --secondary: #1c1f27;
+  --secondary-foreground: #eef0f4;
+  --muted: #1a1d25;
+  --muted-foreground: #9aa1b0;
+  --destructive: #ff6369;
+  --destructive-foreground: #160607;
+  --border: #2b303b;
+  --input: #181b22;
+  --ring: #7d7cff;
+  --card: #161922;
+  --card-foreground: #eef0f4;
+  --accent: #7d7cff;
+  --accent-foreground: #0b0b14;
+  --panel: #161922;
+  --sidebar: #12141a;
+  --sidebar-foreground: #eef0f4;
+  --sidebar-border: #262a34;
+  --shadow-sm: 0 1px 2px color-mix(in oklab, #000 40%, transparent);
+  --shadow-md: 0 12px 36px color-mix(in oklab, #000 45%, transparent);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 13.5px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  accent-color: var(--primary);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+::selection {
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
+  color: var(--foreground);
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in oklab, var(--ring) 70%, transparent);
+  outline-offset: 2px;
+}

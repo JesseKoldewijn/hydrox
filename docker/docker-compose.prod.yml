@@ -1,0 +1,50 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: hydrox
+      MYSQL_DATABASE: hydrox
+      MYSQL_USER: hydrox
+      MYSQL_PASSWORD: hydrox
+    volumes:
+      - mysqldata:/var/lib/mysql
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uhydrox", "-phydrox"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 15s
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/api.Dockerfile
+      target: runner
+    environment:
+      DATABASE_URL: mysql://hydrox:hydrox@mysql:3306/hydrox
+      WEB_ORIGIN: http://localhost:3000
+      PORT: 3000
+      API_PORT: 3000
+      NODE_ENV: production
+      COOKIE_SECRET: hydrox-prod-cookie-secret-change-me
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+volumes:
+  mysqldata:

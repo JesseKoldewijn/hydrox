@@ -1,0 +1,48 @@
+{
+  "name": "@hydrox/api",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch --exclude '../web/**' --exclude '../../**/node_modules/**' src/main.ts",
+    "start": "node dist/main.js",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:integration": "vitest run --config vitest.integration.config.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.0.1",
+    "@fastify/static": "^10.1.2",
+    "@hydrox/contracts": "workspace:*",
+    "@hydrox/db": "workspace:*",
+    "@hydrox/domain": "workspace:*",
+    "@hydrox/sync": "workspace:*",
+    "@hydrox/trpc": "workspace:*",
+    "@nest-native/trpc": "^0.6.0",
+    "@nestjs/common": "^11.1.3",
+    "@nestjs/core": "^11.1.3",
+    "@nestjs/platform-fastify": "^11.1.3",
+    "@nestjs/schedule": "^6.0.0",
+    "@trpc/server": "^11.4.3",
+    "argon2": "^0.43.0",
+    "drizzle-orm": "^0.44.2",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2",
+    "web-push": "^3.6.7",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@octanejs/vite-plugin": "^0.1.13",
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^22.15.32",
+    "@types/web-push": "^3.6.4",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.20.3",
+    "typescript": "^5.8.3",
+    "vite": "^8.1.5",
+    "vitest": "^3.2.4"
+  }
+}
