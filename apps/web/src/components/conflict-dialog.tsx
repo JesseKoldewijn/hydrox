@@ -51,7 +51,7 @@ export function ConflictDialog() {
                 </div>
               </div>
               <select
-                class="mt-2 rounded-md border border-border bg-background px-2 py-1"
+                class="control mt-2"
                 data-testid={`conflict-choice-${c.field}`}
                 value={choices[c.field] ?? "local"}
                 onChange={(e: any) =>
