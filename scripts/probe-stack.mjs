@@ -16,13 +16,9 @@ const requireApi = args.has("--require-api") || args.has("--full") || httpOnly;
 const requireWeb = args.has("--require-web") || args.has("--full") || httpOnly;
 const probeInfra = !httpOnly;
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
+const DATABASE_URL = process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
 const APP_URL =
-  process.env.APP_URL ??
-  process.env.API_URL ??
-  process.env.WEB_URL ??
-  "http://127.0.0.1:3000";
+  process.env.APP_URL ?? process.env.API_URL ?? process.env.WEB_URL ?? "http://127.0.0.1:3000";
 
 const results = [];
 
@@ -84,7 +80,5 @@ if (requireWeb) {
 }
 
 const failed = results.filter((r) => !r.ok);
-console.log(
-  `\nProbe summary: ${results.length - failed.length}/${results.length} passed`,
-);
+console.log(`\nProbe summary: ${results.length - failed.length}/${results.length} passed`);
 process.exit(failed.length === 0 ? 0 : 1);

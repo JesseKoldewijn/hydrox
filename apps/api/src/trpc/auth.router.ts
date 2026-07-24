@@ -1,17 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { Input, Mutation, Query, Router, TrpcContext } from "@nest-native/trpc";
 import { z } from "zod";
-import {
-  loginInputSchema,
-  registerInputSchema,
-  sessionUserSchema,
-} from "@hydrox/contracts";
+import { loginInputSchema, registerInputSchema, sessionUserSchema } from "@hydrox/contracts";
 import { AuthService } from "../auth/auth.service.js";
-import {
-  SESSION_COOKIE,
-  extractToken,
-  type TrpcContext as Ctx,
-} from "./context.js";
+import { SESSION_COOKIE, extractToken, type TrpcContext as Ctx } from "./context.js";
 
 @Router("auth")
 @Injectable()
@@ -25,10 +17,7 @@ export class AuthRouter {
       token: z.string(),
     }),
   })
-  async register(
-    @Input() input: z.infer<typeof registerInputSchema>,
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async register(@Input() input: z.infer<typeof registerInputSchema>, @TrpcContext() ctx: Ctx) {
     const result = await this.auth.register(input);
     ctx.res.setCookie?.(SESSION_COOKIE, result.token, {
       path: "/",
@@ -46,10 +35,7 @@ export class AuthRouter {
       token: z.string(),
     }),
   })
-  async login(
-    @Input() input: z.infer<typeof loginInputSchema>,
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async login(@Input() input: z.infer<typeof loginInputSchema>, @TrpcContext() ctx: Ctx) {
     const result = await this.auth.login(input);
     ctx.res.setCookie?.(SESSION_COOKIE, result.token, {
       path: "/",

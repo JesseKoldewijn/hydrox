@@ -9,10 +9,10 @@ All services declare Compose `healthcheck`s. `app` uses `depends_on: condition: 
 
 ## Health endpoints (app)
 
-| Path | Meaning |
-|------|---------|
-| `GET /health` | Liveness — process is up |
-| `GET /ready` | Readiness — MySQL reachable |
+| Path                    | Meaning                      |
+| ----------------------- | ---------------------------- |
+| `GET /health`           | Liveness — process is up     |
+| `GET /ready`            | Readiness — MySQL reachable  |
 | `GET /trpc/health.ping` | tRPC ping (protocol version) |
 
 Image `HEALTHCHECK` hits `/ready`.

@@ -15,6 +15,17 @@ async function registerFreshUser(page: Page) {
   return suffix;
 }
 
+async function createSyncedIssue(page: Page, title: string) {
+  await page.getByTestId("issue-title-input").fill(title);
+  await page.getByTestId("create-issue-submit").click();
+  const card = page.locator('[data-testid="issue-card"]').filter({ hasText: title });
+  await expect(card).toBeVisible({ timeout: 15_000 });
+  await expect
+    .poll(async () => card.getAttribute("data-pending"), { timeout: 20_000 })
+    .toBe("false");
+  return card;
+}
+
 test.describe("hydrox e2e", () => {
   test("landing shows brand on auth screen", async ({ page }) => {
     await page.goto("/");
@@ -38,10 +49,7 @@ test.describe("hydrox e2e", () => {
 
     // LOCAL-pending must resolve to a real project key after sync.push
     await expect
-      .poll(
-        async () => card.getAttribute("data-issue-key"),
-        { timeout: 20_000 },
-      )
+      .poll(async () => card.getAttribute("data-issue-key"), { timeout: 20_000 })
       .toMatch(/^[A-Z][A-Z0-9]+-\d+$/);
 
     await expect(card).toHaveAttribute("data-pending", "false");
@@ -62,10 +70,13 @@ test.describe("hydrox e2e", () => {
 
     const done = page.getByTestId("column-Done");
     await expect(done).toBeVisible();
-    await card.dragTo(done);
-    await expect(done.locator('[data-testid="issue-card"]').filter({ hasText: title })).toBeVisible({
-      timeout: 10_000,
-    });
+    await done.scrollIntoViewIfNeeded();
+    await card.dragTo(done, { targetPosition: { x: 40, y: 60 } });
+    await expect(done.locator('[data-testid="issue-card"]').filter({ hasText: title })).toBeVisible(
+      {
+        timeout: 10_000,
+      },
+    );
     await expect
       .poll(
         async () =>
@@ -83,5 +94,20 @@ test.describe("hydrox e2e", () => {
     await registerFreshUser(page);
     await expect(page.getByTestId("board-columns")).toBeVisible();
     await expect(page.getByTestId("create-issue-form")).toBeVisible();
+    await expect(page.getByTestId("bottom-nav-board")).toBeVisible();
+    await expect(page.getByTestId("nav-menu")).toBeVisible();
+    await page.getByTestId("nav-menu").click();
+    await expect(page.getByTestId("nav-drawer")).toBeVisible();
+    await expect(page.getByTestId("nav-drawer").getByTestId("drawer-nav-settings")).toBeVisible();
+    await page.getByTestId("nav-drawer-close").click();
+    await expect(page.getByTestId("nav-drawer")).toHaveCount(0);
+
+    const title = `Mobile ${Date.now()}`;
+    const card = await createSyncedIssue(page, title);
+    await card.click();
+    await expect(page.getByTestId("issue-detail")).toBeVisible();
+    await expect(page.locator(".issue-modal")).toBeVisible();
+    await page.getByTestId("issue-detail-close").click();
+    await expect(page.getByTestId("issue-detail")).toHaveCount(0);
   });
 });

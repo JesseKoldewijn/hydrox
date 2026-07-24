@@ -7,17 +7,12 @@ import type { TrpcContext as Ctx } from "./context.js";
 @Router("admin")
 @Injectable()
 export class AdminRouter {
-  constructor(
-    @Inject(RetentionJobsService) private readonly jobs: RetentionJobsService,
-  ) {}
+  constructor(@Inject(RetentionJobsService) private readonly jobs: RetentionJobsService) {}
 
   @Mutation({
     input: z.object({ force: z.boolean().default(false) }),
   })
-  async triggerPurge(
-    @Input() input: { force: boolean },
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async triggerPurge(@Input() input: { force: boolean }, @TrpcContext() ctx: Ctx) {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
     // Capability check is enforced at org admin UI layer; service still requires auth
     await this.jobs.purgeAuditEvents();
@@ -27,10 +22,7 @@ export class AdminRouter {
   @Mutation({
     input: z.object({ force: z.boolean().default(false) }),
   })
-  async runRetention(
-    @Input() input: { force: boolean },
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async runRetention(@Input() input: { force: boolean }, @TrpcContext() ctx: Ctx) {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
     return this.jobs.runRetentionNow(input.force);
   }

@@ -52,12 +52,10 @@ export const issueKeySchema = z
 export const issueTypeSchema = z.enum(["story", "bug", "task", "sub_task"]);
 export type IssueType = z.infer<typeof issueTypeSchema>;
 
-export const issueLinkTypeSchema = z.enum([
-  "blocks",
-  "is_blocked_by",
-  "relates_to",
-  "duplicates",
-]);
+export const issuePrioritySchema = z.enum(["highest", "high", "medium", "low", "lowest"]);
+export type IssuePriority = z.infer<typeof issuePrioritySchema>;
+
+export const issueLinkTypeSchema = z.enum(["blocks", "is_blocked_by", "relates_to", "duplicates"]);
 
 export const initiativeScopeSchema = z.enum(["organization", "project"]);
 

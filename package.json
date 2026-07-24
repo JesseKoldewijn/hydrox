@@ -1,7 +1,6 @@
 {
   "name": "hydrox",
   "private": true,
-  "packageManager": "yarn@4.17.1",
   "workspaces": [
     "apps/*",
     "packages/*"
@@ -9,7 +8,11 @@
   "scripts": {
     "build": "turbo run build --filter=@hydrox/web --filter=@hydrox/api...",
     "dev": "yarn workspace @hydrox/api dev",
-    "lint": "turbo run lint",
+    "lint": "oxlint .",
+    "lint:fix": "oxlint --fix .",
+    "fmt": "oxfmt",
+    "fmt:check": "oxfmt --check",
+    "knip": "knip",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "test:e2e": "turbo run test:e2e --filter=@hydrox/web",
@@ -25,15 +28,20 @@
     "test:stack:infra": "bash scripts/test-stack.sh infra",
     "test:stack:full": "bash scripts/test-stack.sh full",
     "test:stack:prod": "bash scripts/test-stack.sh prod",
-    "validate": "yarn lint && yarn typecheck && yarn test",
+    "validate": "yarn lint && yarn fmt:check && yarn knip && yarn typecheck && yarn test",
     "ci:local": "yarn validate && yarn test:integration && yarn probe:stack"
   },
   "devDependencies": {
+    "knip": "^6.29.0",
+    "mysql2": "^3.23.1",
+    "oxfmt": "^0.60.0",
+    "oxlint": "^1.75.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
   },
   "engines": {
     "node": ">=20"
-  }
+  },
+  "packageManager": "yarn@4.17.1"
 }

@@ -4,8 +4,7 @@ import { sql } from "drizzle-orm";
 import { AuthService } from "./auth/auth.service.js";
 import { SyncBusService } from "./sync/sync-bus.service.js";
 
-const DATABASE_URL =
-  process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
+const DATABASE_URL = process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
 
 describe("mysql integration", () => {
   const db = createDb(DATABASE_URL);

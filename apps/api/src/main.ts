@@ -1,9 +1,6 @@
 import "reflect-metadata";
 import { NestFactory } from "@nestjs/core";
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from "@nestjs/platform-fastify";
+import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import cookie from "@fastify/cookie";
 import cors from "@fastify/cors";
 import { existsSync } from "node:fs";
@@ -31,6 +28,7 @@ function isApiPath(url: string) {
 async function registerViteDev(app: NestFastifyApplication) {
   // Nest Fastify already registers middie — use app.use(), never @fastify/middie.
   const { createServer } = await import("vite");
+  const { readFileSync } = await import("node:fs");
   const httpServer = app.getHttpServer() as HttpServer;
   const vite = await createServer({
     configFile: join(webRoot, "vite.config.ts"),
@@ -52,12 +50,27 @@ async function registerViteDev(app: NestFastifyApplication) {
     return vite.middlewares(req, res, next);
   });
 
-  // Transform and serve index.html for document navigations.
+  // SPA document fallback for client routes (/board, /backlog, …).
+  // Vite middleware (appType: custom) does not serve index.html for those paths.
   const fastify = app.getHttpAdapter().getInstance();
-  fastify.get("/", async (_req, reply) => {
-    const { readFileSync } = await import("node:fs");
+  fastify.addHook("onRequest", async (req, reply) => {
+    if (req.method !== "GET" && req.method !== "HEAD") return;
+    const path = (req.url?.split("?")[0] ?? "") || "/";
+    if (isApiPath(path)) return;
+    if (
+      path.startsWith("/@") ||
+      path.startsWith("/node_modules") ||
+      path.startsWith("/src") ||
+      path.startsWith("/assets") ||
+      path.includes(".")
+    ) {
+      return;
+    }
+    const accept = String(req.headers.accept ?? "");
+    if (path !== "/" && !accept.includes("text/html")) return;
+
     const template = readFileSync(join(webRoot, "index.html"), "utf-8");
-    const html = await vite.transformIndexHtml("/", template);
+    const html = await vite.transformIndexHtml(path, template);
     return reply.type("text/html").send(html);
   });
 
@@ -67,9 +80,7 @@ async function registerViteDev(app: NestFastifyApplication) {
 async function registerStaticProd(app: NestFastifyApplication) {
   const fastify = app.getHttpAdapter().getInstance();
   if (!existsSync(webDist)) {
-    console.warn(
-      `Web dist not found at ${webDist}; SPA static serving disabled`,
-    );
+    console.warn(`Web dist not found at ${webDist}; SPA static serving disabled`);
     return;
   }
 
@@ -83,12 +94,7 @@ async function registerStaticProd(app: NestFastifyApplication) {
   fastify.addHook("onRequest", async (req, reply) => {
     if (req.method !== "GET" && req.method !== "HEAD") return;
     const url = (req.url.split("?")[0] ?? "").replace(/\/+$/, "") || "/";
-    if (
-      url.startsWith("/trpc") ||
-      url === "/health" ||
-      url === "/ready" ||
-      url.includes(".")
-    ) {
+    if (url.startsWith("/trpc") || url === "/health" || url === "/ready" || url.includes(".")) {
       return;
     }
     if (url === "/") return; // @fastify/static serves index.html

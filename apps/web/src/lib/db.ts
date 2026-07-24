@@ -9,9 +9,19 @@ export type LocalIssue = {
   description: string | null;
   statusId: string;
   assigneeId: string | null;
+  reporterId: string | null;
+  epicId: string | null;
+  parentIssueId: string | null;
   sprintId: string | null;
+  priority: string;
   backlogRank: string;
   storyPoints: number | null;
+  dueDate: string | null;
+  originalEstimateMinutes: number | null;
+  remainingEstimateMinutes: number | null;
+  fixVersionId: string | null;
+  labelIds: string[];
+  componentIds: string[];
   version: number;
   updatedAt: string;
   deletedAt: string | null;
@@ -53,6 +63,20 @@ export class HydroxDB extends Dexie {
     super("hydrox");
     this.version(1).stores({
       issues: "id, projectId, statusId, sprintId, backlogRank, key",
+      syncQueue: "++id, opId, entityId",
+      conflicts: "id, entityId",
+      meta: "key",
+    });
+    this.version(2).stores({
+      issues:
+        "id, projectId, statusId, sprintId, backlogRank, key, priority, epicId, parentIssueId",
+      syncQueue: "++id, opId, entityId",
+      conflicts: "id, entityId",
+      meta: "key",
+    });
+    this.version(3).stores({
+      issues:
+        "id, projectId, statusId, sprintId, backlogRank, key, priority, epicId, parentIssueId, fixVersionId",
       syncQueue: "++id, opId, entityId",
       conflicts: "id, entityId",
       meta: "key",

@@ -1,0 +1,17 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/.vite/**",
+    "**/coverage/**",
+    "**/playwright-report/**",
+    "**/test-results/**",
+    "apps/api/src/@generated/**",
+    "apps/web/dist-ssg/**",
+    "packages/db/drizzle/**",
+    ".yarn/**",
+    "yarn.lock",
+    "*.min.js",
+    "*.min.css"
+  ]
+}

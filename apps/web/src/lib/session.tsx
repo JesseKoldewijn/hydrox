@@ -1,5 +1,6 @@
 /** @jsxImportSource octane */
-import { useEffect, useState } from "octane";
+import { createContext, useContext, useEffect, useState } from "octane";
+import type { OctaneNode } from "octane";
 import { trpc } from "./trpc";
 
 export type SessionUser = {
@@ -10,7 +11,16 @@ export type SessionUser = {
   avatarUrl: string | null;
 };
 
-export function useSession() {
+type SessionValue = {
+  status: "loading" | "ready";
+  user: SessionUser | null;
+  refresh: () => Promise<void>;
+  logout: () => Promise<void>;
+};
+
+const SessionContext = createContext<SessionValue | null>(null);
+
+export function SessionProvider(props: { children?: OctaneNode }) {
   const [status, setStatus] = useState<"loading" | "ready">("loading");
   const [user, setUser] = useState<SessionUser | null>(null);
 
@@ -35,5 +45,17 @@ export function useSession() {
     void refresh();
   }, []);
 
-  return { status, user, refresh, logout };
+  return (
+    <SessionContext.Provider value={{ status, user, refresh, logout }}>
+      {props.children}
+    </SessionContext.Provider>
+  );
+}
+
+export function useSession(): SessionValue {
+  const value = useContext(SessionContext);
+  if (!value) {
+    throw new Error("useSession must be used under SessionProvider");
+  }
+  return value;
 }

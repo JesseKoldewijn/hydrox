@@ -8,9 +8,7 @@ export const DB = Symbol("HYDROX_DB");
     {
       provide: DB,
       useFactory: (): HydroxDb => {
-        const url =
-          process.env.DATABASE_URL ??
-          "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
+        const url = process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox";
         return createDb(url);
       },
     },

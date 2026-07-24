@@ -11,20 +11,29 @@ export function ActivityView(props: { organizationId: string }) {
   }, [props.organizationId]);
 
   return (
-    <div class="space-y-2">
-      <h1 class="text-xl font-semibold">Activity</h1>
-      {events
-        .slice()
-        .reverse()
-        .map((e) => (
-          <div key={e.id} class="rounded-md border border-border bg-card px-3 py-2 text-sm">
-            <span class="font-medium">{e.action}</span>
-            <span class="text-muted-foreground">{` - ${String(e.entityType)}`}</span>
-            <div class="text-xs text-muted-foreground">
-              {new Date(e.createdAt).toLocaleString()}
-            </div>
-          </div>
-        ))}
+    <div class="space-y-3" data-testid="activity-view">
+      <h1 class="panel-title">Activity</h1>
+      {events.length === 0 ? (
+        <div class="empty-panel" data-testid="activity-empty">
+          <p class="empty-title">No activity yet</p>
+          <p class="empty-copy">Creates, updates, and comments will show up in this timeline.</p>
+        </div>
+      ) : (
+        <ol class="activity-timeline" data-testid="activity-timeline">
+          {events.map((e) => (
+            <li key={e.id} class="activity-item" data-testid="activity-item">
+              <div class="font-medium">
+                {e.summary ?? `${e.actorName ?? "Someone"} · ${e.action}`}
+              </div>
+              <div class="text-xs text-muted-foreground">
+                {[e.entityKey, e.entityTitle].filter(Boolean).join(" · ") || e.entityType}
+                {" · "}
+                {new Date(e.createdAt).toLocaleString()}
+              </div>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }

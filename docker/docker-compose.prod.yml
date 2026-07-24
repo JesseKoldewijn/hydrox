@@ -8,22 +8,9 @@ services:
       MYSQL_PASSWORD: hydrox
     volumes:
       - mysqldata:/var/lib/mysql
-    command:
-      [
-        "--character-set-server=utf8mb4",
-        "--collation-server=utf8mb4_unicode_ci",
-      ]
+    command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "127.0.0.1",
-          "-uhydrox",
-          "-phydrox",
-        ]
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uhydrox", "-phydrox"]
       interval: 5s
       timeout: 5s
       retries: 20

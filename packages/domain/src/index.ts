@@ -74,13 +74,7 @@ const PROJECT_ROLE_CAPS: Record<string, Capability[]> = {
     "attachments.manage",
     "purge.trigger",
   ],
-  member: [
-    "project.view",
-    "board.edit",
-    "issue.create",
-    "issue.edit",
-    "attachments.manage",
-  ],
+  member: ["project.view", "board.edit", "issue.create", "issue.edit", "attachments.manage"],
   viewer: ["project.view"],
 };
 
@@ -101,10 +95,7 @@ export function resolveCapabilities(input: {
   return caps;
 }
 
-export function hasCapability(
-  caps: Set<Capability>,
-  required: Capability,
-): boolean {
+export function hasCapability(caps: Set<Capability>, required: Capability): boolean {
   return caps.has(required);
 }
 

@@ -60,18 +60,21 @@ export function NotificationsView() {
           {pushStatus}
         </p>
       ) : null}
-      <ul class="space-y-2" data-testid="notifications-list">
-        {items.map((n) => (
-          <li
-            key={n.id}
-            class="rounded-md border border-border bg-card px-3 py-2"
-            data-testid="notification-item"
-          >
-            <div class="font-medium">{n.title}</div>
-            <div class="text-sm text-muted-foreground">{n.body}</div>
-          </li>
-        ))}
-      </ul>
+      {items.length === 0 ? (
+        <div class="empty-panel" data-testid="notifications-empty">
+          <p class="empty-title">No notifications yet</p>
+          <p class="empty-copy">Mentions and project updates will appear here when they arrive.</p>
+        </div>
+      ) : (
+        <ul class="space-y-2" data-testid="notifications-list">
+          {items.map((n) => (
+            <li key={n.id} class="surface-card" data-testid="notification-item">
+              <div class="font-medium">{n.title}</div>
+              <div class="text-sm text-muted-foreground">{n.body}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

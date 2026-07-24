@@ -1,12 +1,7 @@
 import { z } from "zod";
 import { entityIdSchema, idempotencyKeySchema } from "./common.js";
 
-export const syncOpTypeSchema = z.enum([
-  "create",
-  "update",
-  "delete",
-  "restore",
-]);
+export const syncOpTypeSchema = z.enum(["create", "update", "delete", "restore"]);
 
 export const syncEntityTypeSchema = z.enum([
   "organization",

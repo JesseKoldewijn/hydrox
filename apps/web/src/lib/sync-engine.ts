@@ -8,30 +8,47 @@ function toLocalIssue(
   fields: Record<string, unknown>,
   fallback?: Partial<LocalIssue>,
 ): LocalIssue {
+  const labelIds = Array.isArray(fields.labelIds)
+    ? (fields.labelIds as string[])
+    : (fallback?.labelIds ?? []);
+  const componentIds = Array.isArray(fields.componentIds)
+    ? (fields.componentIds as string[])
+    : (fallback?.componentIds ?? []);
+  const dueRaw = fields.dueDate ?? fallback?.dueDate ?? null;
   return {
     id: entityId,
     projectId: String(fields.projectId ?? fallback?.projectId ?? ""),
     key: String(fields.key ?? fallback?.key ?? ""),
     type: String(fields.type ?? fallback?.type ?? "task"),
     title: String(fields.title ?? fallback?.title ?? ""),
-    description:
-      (fields.description as string | null | undefined) ??
-      fallback?.description ??
-      null,
+    description: (fields.description as string | null | undefined) ?? fallback?.description ?? null,
     statusId: String(fields.statusId ?? fallback?.statusId ?? ""),
-    assigneeId:
-      (fields.assigneeId as string | null | undefined) ??
-      fallback?.assigneeId ??
-      null,
-    sprintId:
-      (fields.sprintId as string | null | undefined) ??
-      fallback?.sprintId ??
-      null,
+    assigneeId: (fields.assigneeId as string | null | undefined) ?? fallback?.assigneeId ?? null,
+    reporterId: (fields.reporterId as string | null | undefined) ?? fallback?.reporterId ?? null,
+    epicId: (fields.epicId as string | null | undefined) ?? fallback?.epicId ?? null,
+    parentIssueId:
+      (fields.parentIssueId as string | null | undefined) ?? fallback?.parentIssueId ?? null,
+    sprintId: (fields.sprintId as string | null | undefined) ?? fallback?.sprintId ?? null,
+    priority: String(fields.priority ?? fallback?.priority ?? "medium"),
     backlogRank: String(fields.backlogRank ?? fallback?.backlogRank ?? "m"),
-    storyPoints:
-      (fields.storyPoints as number | null | undefined) ??
-      fallback?.storyPoints ??
+    storyPoints: (fields.storyPoints as number | null | undefined) ?? fallback?.storyPoints ?? null,
+    dueDate: dueRaw
+      ? typeof dueRaw === "string"
+        ? dueRaw
+        : new Date(dueRaw as Date).toISOString()
+      : null,
+    originalEstimateMinutes:
+      (fields.originalEstimateMinutes as number | null | undefined) ??
+      fallback?.originalEstimateMinutes ??
       null,
+    remainingEstimateMinutes:
+      (fields.remainingEstimateMinutes as number | null | undefined) ??
+      fallback?.remainingEstimateMinutes ??
+      null,
+    fixVersionId:
+      (fields.fixVersionId as string | null | undefined) ?? fallback?.fixVersionId ?? null,
+    labelIds,
+    componentIds,
     version,
     updatedAt: new Date().toISOString(),
     deletedAt: null,
@@ -48,8 +65,16 @@ export async function createIssueLocally(input: {
   type: string;
   title: string;
   statusId: string;
+  priority?: string;
+  parentIssueId?: string | null;
+  epicId?: string | null;
+  sprintId?: string | null;
+  storyPoints?: number | null;
+  assigneeId?: string | null;
+  componentIds?: string[];
 }) {
   const id = crypto.randomUUID();
+  const componentIds = input.componentIds ?? [];
   const issue: LocalIssue = {
     id,
     projectId: input.projectId,
@@ -58,10 +83,20 @@ export async function createIssueLocally(input: {
     title: input.title,
     description: null,
     statusId: input.statusId,
-    assigneeId: null,
-    sprintId: null,
+    assigneeId: input.assigneeId ?? null,
+    reporterId: null,
+    epicId: input.epicId ?? null,
+    parentIssueId: input.parentIssueId ?? null,
+    sprintId: input.sprintId ?? null,
+    priority: input.priority ?? "medium",
     backlogRank: `z${Date.now()}`,
-    storyPoints: null,
+    storyPoints: input.storyPoints ?? null,
+    dueDate: null,
+    originalEstimateMinutes: null,
+    remainingEstimateMinutes: null,
+    fixVersionId: null,
+    labelIds: [],
+    componentIds,
     version: 0,
     updatedAt: new Date().toISOString(),
     deletedAt: null,
@@ -81,6 +116,13 @@ export async function createIssueLocally(input: {
       title: input.title,
       statusId: input.statusId,
       backlogRank: issue.backlogRank,
+      priority: issue.priority,
+      parentIssueId: issue.parentIssueId,
+      epicId: issue.epicId,
+      sprintId: issue.sprintId,
+      storyPoints: issue.storyPoints,
+      assigneeId: issue.assigneeId,
+      componentIds,
     },
     clientTimestamp: new Date().toISOString(),
   });
@@ -88,10 +130,7 @@ export async function createIssueLocally(input: {
   return issue;
 }
 
-export async function updateIssueLocally(
-  id: string,
-  patch: Partial<LocalIssue>,
-) {
+export async function updateIssueLocally(id: string, patch: Partial<LocalIssue>) {
   const current = await db.issues.get(id);
   if (!current) return;
   const next = {
@@ -161,9 +200,7 @@ export async function flushSyncQueue() {
       if (m.entityId !== item.entityId && existing) {
         await db.issues.delete(item.entityId);
       }
-      await db.issues.put(
-        toLocalIssue(m.entityId, m.version, m.fields, existing ?? undefined),
-      );
+      await db.issues.put(toLocalIssue(m.entityId, m.version, m.fields, existing ?? undefined));
     }
 
     for (const c of result.conflicts) {

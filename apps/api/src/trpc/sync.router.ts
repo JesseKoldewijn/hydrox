@@ -1,12 +1,5 @@
 import { Inject, Injectable } from "@nestjs/common";
-import {
-  Input,
-  Mutation,
-  Query,
-  Router,
-  Subscription,
-  TrpcContext,
-} from "@nest-native/trpc";
+import { Input, Mutation, Query, Router, Subscription, TrpcContext } from "@nest-native/trpc";
 import { z } from "zod";
 import {
   syncPatchEventSchema,
@@ -27,19 +20,13 @@ export class SyncRouter {
     input: syncPushRequestSchema,
     output: syncPushResultSchema,
   })
-  async push(
-    @Input() input: z.infer<typeof syncPushRequestSchema>,
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async push(@Input() input: z.infer<typeof syncPushRequestSchema>, @TrpcContext() ctx: Ctx) {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
     return this.sync.push(ctx.user.id, input.ops);
   }
 
   @Query({ input: syncPullRequestSchema })
-  async pull(
-    @Input() input: z.infer<typeof syncPullRequestSchema>,
-    @TrpcContext() ctx: Ctx,
-  ) {
+  async pull(@Input() input: z.infer<typeof syncPullRequestSchema>, @TrpcContext() ctx: Ctx) {
     if (!ctx.user) throw new Error("UNAUTHORIZED");
     return this.sync.pull(input.since, input.projectIds);
   }

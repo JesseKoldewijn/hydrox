@@ -42,10 +42,6 @@ export function mergeFields(input: {
 
     const serverValue = input.server[patch.field];
     const stale = patch.baseVersion < input.serverVersion;
-    const diverged =
-      stale && !deepEqual(serverValue, patch.value) && input.server[patch.field] !== undefined
-        ? !deepEqual(serverValue, getBaseExpectation(input.server, patch))
-        : false;
 
     // Conflict when client based on older version and server field differs from what client expected
     if (stale && !deepEqual(serverValue, patch.value)) {
@@ -80,13 +76,6 @@ export function mergeFields(input: {
     };
   }
   return { kind: "merged", fields, version };
-}
-
-function getBaseExpectation(
-  _server: Record<string, unknown>,
-  _patch: { field: string; value: unknown; baseVersion: number },
-): unknown {
-  return undefined;
 }
 
 export function deepEqual(a: unknown, b: unknown): boolean {
@@ -129,8 +118,7 @@ export function applyConflictResolutions(input: {
   const fields = { ...input.server };
   for (const c of input.conflicts) {
     const choice = input.resolutions[c.field] ?? "server";
-    fields[c.field] =
-      choice === "local" ? input.local[c.field] ?? c.localValue : c.serverValue;
+    fields[c.field] = choice === "local" ? (input.local[c.field] ?? c.localValue) : c.serverValue;
   }
   // Apply non-conflict local fields already in local
   for (const [k, v] of Object.entries(input.local)) {

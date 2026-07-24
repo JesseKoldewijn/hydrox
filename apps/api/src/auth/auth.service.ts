@@ -13,11 +13,7 @@ import {
   type HydroxDb,
 } from "@hydrox/db";
 import { DB } from "../db/db.module.js";
-import type {
-  LoginInput,
-  RegisterInput,
-  SessionUser,
-} from "./auth.types.js";
+import type { LoginInput, RegisterInput, SessionUser } from "./auth.types.js";
 
 const SESSION_DAYS = 14;
 
@@ -31,11 +27,12 @@ export class AuthService {
     const orgId = crypto.randomUUID();
     const workspaceId = crypto.randomUUID();
     const orgName = input.organizationName ?? `${input.displayName}'s Org`;
-    const slug = orgName
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .slice(0, 48) || "org";
+    const slug =
+      orgName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .slice(0, 48) || "org";
 
     await this.db.insert(users).values({
       id: userId,
@@ -149,11 +146,7 @@ export class AuthService {
   }
 
   private async toSessionUser(userId: string): Promise<SessionUser> {
-    const [row] = await this.db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
+    const [row] = await this.db.select().from(users).where(eq(users.id, userId)).limit(1);
     if (!row) throw new UnauthorizedException();
     return {
       id: row.id,

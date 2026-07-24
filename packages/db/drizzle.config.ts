@@ -5,8 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "mysql",
   dbCredentials: {
-    url:
-      process.env.DATABASE_URL ??
-      "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox",
+    url: process.env.DATABASE_URL ?? "mysql://hydrox:hydrox@127.0.0.1:3306/hydrox",
   },
 });

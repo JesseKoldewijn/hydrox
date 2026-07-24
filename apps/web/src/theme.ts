@@ -5,6 +5,7 @@ export function applyTheme(mode: ThemeMode) {
   const preferDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
   const dark = mode === "dark" || (mode === "system" && preferDark);
   root.classList.toggle("dark", dark);
+  root.style.colorScheme = dark ? "dark" : "light";
   localStorage.setItem("hydrox-theme", mode);
 }
 

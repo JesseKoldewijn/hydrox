@@ -6,21 +6,14 @@ import {
   customRoles,
   type HydroxDb,
 } from "@hydrox/db";
-import {
-  resolveCapabilities,
-  hasCapability,
-  type Capability,
-} from "@hydrox/domain";
+import { resolveCapabilities, hasCapability, type Capability } from "@hydrox/domain";
 import { DB } from "../db/db.module.js";
 
 @Injectable()
 export class PermissionsService {
   constructor(@Inject(DB) private readonly db: HydroxDb) {}
 
-  async getProjectCapabilities(
-    userId: string,
-    projectId: string,
-  ): Promise<Set<Capability>> {
+  async getProjectCapabilities(userId: string, projectId: string): Promise<Set<Capability>> {
     const [membership] = await this.db
       .select()
       .from(projectMemberships)
@@ -61,11 +54,7 @@ export class PermissionsService {
     });
   }
 
-  async assert(
-    userId: string,
-    projectId: string,
-    capability: Capability,
-  ): Promise<void> {
+  async assert(userId: string, projectId: string, capability: Capability): Promise<void> {
     const caps = await this.getProjectCapabilities(userId, projectId);
     if (!hasCapability(caps, capability)) {
       throw new Error(`Missing capability: ${capability}`);

@@ -5,9 +5,9 @@ import { db } from "./lib/db";
 import "@hydrox/ui/globals.css";
 import "./styles.css";
 import { initI18n } from "./i18n";
-import { applyTheme } from "./theme";
+import { applyTheme, readTheme } from "./theme";
 
-applyTheme("system");
+applyTheme(readTheme());
 (window as unknown as { __hydroxDb?: unknown }).__hydroxDb = db;
 void initI18n().then(() => {
   const el = document.getElementById("root");

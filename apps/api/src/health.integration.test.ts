@@ -1,20 +1,15 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { NestFactory } from "@nestjs/core";
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from "@nestjs/platform-fastify";
+import { FastifyAdapter, NestFastifyApplication } from "@nestjs/platform-fastify";
 import { AppModule } from "./app.module.js";
 
 describe("health endpoints", () => {
   let app: NestFastifyApplication;
 
   beforeAll(async () => {
-    app = await NestFactory.create<NestFastifyApplication>(
-      AppModule,
-      new FastifyAdapter(),
-      { logger: false },
-    );
+    app = await NestFactory.create<NestFastifyApplication>(AppModule, new FastifyAdapter(), {
+      logger: false,
+    });
     await app.init();
     await app.getHttpAdapter().getInstance().ready();
   });

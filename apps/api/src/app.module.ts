@@ -48,7 +48,7 @@ function parseCookieHeader(header: unknown): Record<string, string> {
         autoSchemaFile: join(process.cwd(), "src/@generated/server.ts"),
         createContext: async ({ req, res }: { req: any; res: any }) => {
           const cookies = {
-            ...(req.cookies ?? {}),
+            ...req.cookies,
             ...parseCookieHeader(req.headers?.cookie),
           };
           const url =

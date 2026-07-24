@@ -5,7 +5,11 @@ export const identityProviderSchema = z.enum(["password"]);
 
 export const registerInputSchema = z.object({
   email: z.string().email(),
-  username: z.string().min(3).max(64).regex(/^[a-zA-Z0-9_-]+$/),
+  username: z
+    .string()
+    .min(3)
+    .max(64)
+    .regex(/^[a-zA-Z0-9_-]+$/),
   password: z.string().min(8).max(128),
   displayName: z.string().min(1).max(120),
   organizationName: z.string().min(1).max(120).optional(),

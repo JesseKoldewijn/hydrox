@@ -4,16 +4,16 @@ Hydrox is a Yarn Berry (`nodeLinker: node-modules`) + Turborepo monorepo.
 
 ## Packages
 
-| Package | Role |
-|---------|------|
-| `apps/api` | NestJS + Fastify + `@nest-native/trpc` — serves tRPC **and** the Octane SPA |
-| `apps/web` | Octane + Tailwind 4 + Dexie local-first client (source); built assets served by Nest |
-| `packages/contracts` | Zod contracts (must stay in sync with `docs/contracts`) |
-| `packages/db` | Drizzle **MySQL** schema + migrations |
-| `packages/domain` | Pure domain helpers (issue keys, ranks, permissions) |
-| `packages/sync` | Field-level merge + conflict helpers |
-| `packages/trpc` | Shared tRPC constants/types |
-| `packages/ui` | Shared CSS tokens + `cn()` |
+| Package              | Role                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `apps/api`           | NestJS + Fastify + `@nest-native/trpc` — serves tRPC **and** the Octane SPA          |
+| `apps/web`           | Octane + Tailwind 4 + Dexie local-first client (source); built assets served by Nest |
+| `packages/contracts` | Zod contracts (must stay in sync with `docs/contracts`)                              |
+| `packages/db`        | Drizzle **MySQL** schema + migrations                                                |
+| `packages/domain`    | Pure domain helpers (issue keys, ranks, permissions)                                 |
+| `packages/sync`      | Field-level merge + conflict helpers                                                 |
+| `packages/trpc`      | Shared tRPC constants/types                                                          |
+| `packages/ui`        | Shared CSS tokens + `cn()`                                                           |
 
 ## Architecture (v0)
 
@@ -31,17 +31,22 @@ Update **docs and Zod together**.
 
 ## Product surfaces agents must keep working
 
-- Board (Kanban DnD), backlog, sprints, initiatives, activity
-- Issue detail (key, comments, attachments, soft-delete)
+- Board (Kanban DnD, swimlanes, templates, type/priority, quick filters), backlog (bulk edit), sprints, epics, roadmap, initiatives, filters, people, releases, dashboard, activity
+- Issue detail drawer (priority, labels, components, versions, dates/estimates, assignee, epic/parent/sprint, sub-tasks, links, comments, attachments, soft-delete)
+- Topbar search (`work.searchIssues`)
 - Conflict dialog (Dexie `conflicts` → resolve per field)
-- Settings: custom roles, project overrides, admin purge
+- Settings: project + workflow editor, custom roles, overrides, admin purge
 - Notifications: in-app list + optional Web Push (`/sw.js` + VAPID env)
 - Soft-delete + scheduled purge (30d) + audit retention (30d)
 
 ## Mandatory local validation (before commit / push)
 
+Run static analysis **before** committing:
+
 ```bash
-yarn lint
+yarn fmt          # or: yarn fmt:check
+yarn lint         # oxlint
+yarn knip         # unused files/exports/deps
 yarn typecheck
 yarn test
 # when touching API/DB/sync/jobs:
@@ -54,7 +59,9 @@ yarn test:stack:infra
 yarn probe:stack
 ```
 
-Or: `yarn validate` / `yarn ci:local`.
+Or: `yarn validate` (fmt:check + lint + knip + typecheck + test) / `yarn ci:local`.
+
+Agents must not skip `yarn fmt`, `yarn lint`, and `yarn knip` when preparing a commit — fix findings or suppress with a justified ignore, never leave CI red.
 
 ## Dev
 

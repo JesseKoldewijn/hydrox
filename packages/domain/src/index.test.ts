@@ -1,10 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  formatIssueKey,
-  parseIssueKey,
-  rankBetween,
-  resolveCapabilities,
-} from "./index.js";
+import { formatIssueKey, parseIssueKey, rankBetween, resolveCapabilities } from "./index.js";
 
 describe("issue keys", () => {
   it("formats and parses Jira-style keys", () => {

@@ -8,3 +8,5 @@
 6. Server publishes `entity.patch` on the in-process sync bus; peers apply via tRPC subscription over **HTTP SSE**.
 
 Soft-deleted issues arrive as patches with `deletedAt` set; clients remove them from the local board.
+
+Issue patches include: `type`, `priority`, `assigneeId`, `reporterId`, `epicId`, `parentIssueId`, `sprintId`, `storyPoints`, `backlogRank`, and `labelIds` (resolved from `issue_labels`). Label membership may also be set via `work.setIssueLabels`.

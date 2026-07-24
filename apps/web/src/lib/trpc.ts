@@ -22,18 +22,12 @@ const apiUrl = import.meta.env.VITE_API_URL ?? "";
 export type HydroxRouter = AnyRouter;
 
 function authHeaders(): HeadersInit {
-  const token =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("hydrox_token")
-      : null;
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("hydrox_token") : null;
   return token ? { authorization: `Bearer ${token}` } : {};
 }
 
 function connectionParams(): Record<string, string> {
-  const token =
-    typeof localStorage !== "undefined"
-      ? localStorage.getItem("hydrox_token")
-      : null;
+  const token = typeof localStorage !== "undefined" ? localStorage.getItem("hydrox_token") : null;
   return token ? { token } : {};
 }
 

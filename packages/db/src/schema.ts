@@ -62,12 +62,7 @@ export const identities = mysqlTable(
     externalId: varchar("external_id", { length: 255 }),
     ...timestamps,
   },
-  (t) => [
-    uniqueIndex("identities_provider_external_uidx").on(
-      t.provider,
-      t.externalId,
-    ),
-  ],
+  (t) => [uniqueIndex("identities_provider_external_uidx").on(t.provider, t.externalId)],
 );
 
 export const sessions = mysqlTable("sessions", {
@@ -108,9 +103,7 @@ export const organizationMemberships = mysqlTable(
     ...timestamps,
     ...softDelete,
   },
-  (t) => [
-    uniqueIndex("org_memberships_uidx").on(t.organizationId, t.userId),
-  ],
+  (t) => [uniqueIndex("org_memberships_uidx").on(t.organizationId, t.userId)],
 );
 
 export const workspaces = mysqlTable("workspaces", {
@@ -140,9 +133,7 @@ export const workspaceMemberships = mysqlTable(
     ...timestamps,
     ...softDelete,
   },
-  (t) => [
-    uniqueIndex("workspace_memberships_uidx").on(t.workspaceId, t.userId),
-  ],
+  (t) => [uniqueIndex("workspace_memberships_uidx").on(t.workspaceId, t.userId)],
 );
 
 export const projects = mysqlTable(
@@ -164,9 +155,7 @@ export const projects = mysqlTable(
     ...timestamps,
     ...softDelete,
   },
-  (t) => [
-    uniqueIndex("projects_org_key_uidx").on(t.organizationId, t.key),
-  ],
+  (t) => [uniqueIndex("projects_org_key_uidx").on(t.organizationId, t.key)],
 );
 
 export const projectMemberships = mysqlTable(
@@ -183,9 +172,7 @@ export const projectMemberships = mysqlTable(
     ...timestamps,
     ...softDelete,
   },
-  (t) => [
-    uniqueIndex("project_memberships_uidx").on(t.projectId, t.userId),
-  ],
+  (t) => [uniqueIndex("project_memberships_uidx").on(t.projectId, t.userId)],
 );
 
 export const customRoles = mysqlTable("custom_roles", {
@@ -218,14 +205,10 @@ export const projectPermissionOverrides = mysqlTable(
       .$type<string[]>()
       .notNull()
       .default(sql`(JSON_ARRAY())`),
-    customRoleId: char("custom_role_id", { length: 36 }).references(
-      () => customRoles.id,
-    ),
+    customRoleId: char("custom_role_id", { length: 36 }).references(() => customRoles.id),
     ...timestamps,
   },
-  (t) => [
-    uniqueIndex("project_overrides_uidx").on(t.projectId, t.userId),
-  ],
+  (t) => [uniqueIndex("project_overrides_uidx").on(t.projectId, t.userId)],
 );
 
 export const workflowStatuses = mysqlTable("workflow_statuses", {
@@ -263,14 +246,12 @@ export const epics = mysqlTable("epics", {
   projectId: char("project_id", { length: 36 })
     .notNull()
     .references(() => projects.id),
-  initiativeId: char("initiative_id", { length: 36 }).references(
-    () => initiatives.id,
-  ),
+  initiativeId: char("initiative_id", { length: 36 }).references(() => initiatives.id),
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description"),
-  statusId: char("status_id", { length: 36 }).references(
-    () => workflowStatuses.id,
-  ),
+  statusId: char("status_id", { length: 36 }).references(() => workflowStatuses.id),
+  startDate: timestamp("start_date"),
+  targetDate: timestamp("target_date"),
   version: int("version").notNull().default(1),
   updatedById: char("updated_by_id", { length: 36 }),
   ...timestamps,
@@ -314,8 +295,13 @@ export const issues = mysqlTable(
       .notNull()
       .references(() => users.id),
     sprintId: char("sprint_id", { length: 36 }).references(() => sprints.id),
+    priority: varchar("priority", { length: 16 }).notNull().default("medium"),
     backlogRank: varchar("backlog_rank", { length: 64 }).notNull().default("m"),
     storyPoints: int("story_points"),
+    dueDate: timestamp("due_date"),
+    originalEstimateMinutes: int("original_estimate_minutes"),
+    remainingEstimateMinutes: int("remaining_estimate_minutes"),
+    fixVersionId: char("fix_version_id", { length: 36 }),
     version: int("version").notNull().default(1),
     updatedById: char("updated_by_id", { length: 36 }),
     ...timestamps,
@@ -325,6 +311,153 @@ export const issues = mysqlTable(
     uniqueIndex("issues_project_key_uidx").on(t.projectId, t.key),
     index("issues_project_idx").on(t.projectId),
     index("issues_sprint_idx").on(t.sprintId),
+  ],
+);
+
+export const components = mysqlTable(
+  "components",
+  {
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
+      .notNull()
+      .references(() => projects.id),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: text("description"),
+    leadUserId: char("lead_user_id", { length: 36 }).references(() => users.id),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
+    ...timestamps,
+    ...softDelete,
+  },
+  (t) => [
+    uniqueIndex("components_project_name_uidx").on(t.projectId, t.name),
+    index("components_project_idx").on(t.projectId),
+  ],
+);
+
+export const issueComponents = mysqlTable(
+  "issue_components",
+  {
+    id: idCol(),
+    issueId: char("issue_id", { length: 36 })
+      .notNull()
+      .references(() => issues.id),
+    componentId: char("component_id", { length: 36 })
+      .notNull()
+      .references(() => components.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("issue_components_uidx").on(t.issueId, t.componentId),
+    index("issue_components_issue_idx").on(t.issueId),
+  ],
+);
+
+export const projectVersions = mysqlTable(
+  "project_versions",
+  {
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
+      .notNull()
+      .references(() => projects.id),
+    name: varchar("name", { length: 120 }).notNull(),
+    description: text("description"),
+    releaseDate: timestamp("release_date"),
+    startDate: timestamp("start_date"),
+    released: int("released").notNull().default(0),
+    archived: int("archived").notNull().default(0),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
+    ...timestamps,
+    ...softDelete,
+  },
+  (t) => [
+    uniqueIndex("project_versions_name_uidx").on(t.projectId, t.name),
+    index("project_versions_project_idx").on(t.projectId),
+  ],
+);
+
+export const issueTemplates = mysqlTable("issue_templates", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
+    .notNull()
+    .references(() => projects.id),
+  name: varchar("name", { length: 120 }).notNull(),
+  description: text("description"),
+  defaults: json("defaults").$type<Record<string, unknown>>().notNull(),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
+  ...timestamps,
+  ...softDelete,
+});
+
+export const dashboards = mysqlTable("dashboards", {
+  id: idCol(),
+  projectId: char("project_id", { length: 36 })
+    .notNull()
+    .references(() => projects.id),
+  ownerId: char("owner_id", { length: 36 })
+    .notNull()
+    .references(() => users.id),
+  name: varchar("name", { length: 120 }).notNull(),
+  layout: json("layout").$type<Record<string, unknown>>().notNull(),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
+  ...timestamps,
+  ...softDelete,
+});
+
+export const dashboardGadgets = mysqlTable("dashboard_gadgets", {
+  id: idCol(),
+  dashboardId: char("dashboard_id", { length: 36 })
+    .notNull()
+    .references(() => dashboards.id),
+  type: varchar("type", { length: 64 }).notNull(),
+  title: varchar("title", { length: 120 }).notNull(),
+  config: json("config").$type<Record<string, unknown>>().notNull(),
+  position: int("position").notNull().default(0),
+  version: int("version").notNull().default(1),
+  updatedById: char("updated_by_id", { length: 36 }),
+  ...timestamps,
+  ...softDelete,
+});
+
+export const labels = mysqlTable(
+  "labels",
+  {
+    id: idCol(),
+    projectId: char("project_id", { length: 36 })
+      .notNull()
+      .references(() => projects.id),
+    name: varchar("name", { length: 64 }).notNull(),
+    color: varchar("color", { length: 32 }),
+    version: int("version").notNull().default(1),
+    updatedById: char("updated_by_id", { length: 36 }),
+    ...timestamps,
+    ...softDelete,
+  },
+  (t) => [
+    uniqueIndex("labels_project_name_uidx").on(t.projectId, t.name),
+    index("labels_project_idx").on(t.projectId),
+  ],
+);
+
+export const issueLabels = mysqlTable(
+  "issue_labels",
+  {
+    id: idCol(),
+    issueId: char("issue_id", { length: 36 })
+      .notNull()
+      .references(() => issues.id),
+    labelId: char("label_id", { length: 36 })
+      .notNull()
+      .references(() => labels.id),
+    ...timestamps,
+  },
+  (t) => [
+    uniqueIndex("issue_labels_uidx").on(t.issueId, t.labelId),
+    index("issue_labels_issue_idx").on(t.issueId),
+    index("issue_labels_label_idx").on(t.labelId),
   ],
 );
 
@@ -449,9 +582,7 @@ export const syncIdempotency = mysqlTable(
     result: json("result").$type<Record<string, unknown>>(),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
-  (t) => [
-    uniqueIndex("sync_idempotency_uidx").on(t.userId, t.idempotencyKey),
-  ],
+  (t) => [uniqueIndex("sync_idempotency_uidx").on(t.userId, t.idempotencyKey)],
 );
 
 export const schema = {
@@ -471,6 +602,14 @@ export const schema = {
   epics,
   sprints,
   issues,
+  components,
+  issueComponents,
+  projectVersions,
+  issueTemplates,
+  dashboards,
+  dashboardGadgets,
+  labels,
+  issueLabels,
   issueLinks,
   comments,
   attachments,

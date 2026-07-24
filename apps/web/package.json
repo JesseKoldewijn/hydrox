@@ -21,6 +21,7 @@
     "@octanejs/base-ui": "^0.1.11",
     "@octanejs/dexie": "^0.1.6",
     "@octanejs/i18next": "^0.1.8",
+    "@octanejs/tanstack-router": "^0.1.12",
     "@octanejs/vite-plugin": "^0.1.13",
     "@trpc/client": "^11.4.3",
     "@trpc/server": "^11.4.3",
