@@ -30,6 +30,103 @@
   letter-spacing: -0.04em;
 }
 
+:root {
+  --control-height: 2rem;
+  --control-px: 0.65rem;
+  --control-radius: var(--radius-md);
+}
+
+.btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  max-height: var(--control-height);
+  padding: 0 0.75rem;
+  border-radius: var(--control-radius);
+  border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn.w-full {
+  width: 100%;
+}
+
+.sidebar-logout {
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background: var(--secondary);
+  color: var(--secondary-foreground);
+  border-color: var(--border);
+  font-weight: 500;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--muted);
+}
+
+.btn-destructive {
+  background: var(--destructive);
+  color: var(--destructive-foreground);
+}
+
+.btn-destructive:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.skeleton-block {
+  animation: hydrox-pulse 1.4s ease-in-out infinite;
+  border-radius: var(--radius-md);
+  background: var(--muted);
+}
+
+@keyframes hydrox-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
 .desktop-only {
   display: none !important;
 }
@@ -218,15 +315,22 @@
 }
 
 .menu-btn {
+  box-sizing: border-box;
   flex: 0 0 auto;
+  height: var(--control-height);
+  min-height: var(--control-height);
+  max-height: var(--control-height);
   border: 1px solid var(--border);
   background: var(--input);
   color: var(--foreground);
-  border-radius: var(--radius-md);
-  padding: 0.4rem 0.65rem;
+  border-radius: var(--control-radius);
+  padding: 0 var(--control-px);
   cursor: pointer;
   font-weight: 600;
   font-size: 0.75rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
   box-shadow: var(--shadow-sm);
 }
 
@@ -577,21 +681,79 @@
 .quick-filters select,
 .composer select,
 .sidebar select,
-.nav-drawer select {
+.nav-drawer select,
+.form-panel
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.form-panel select,
+.form-row input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.form-row select,
+.control-field
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.control-field select,
+.issue-detail-section
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.issue-detail-section select,
+.issue-modal
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.issue-modal select,
+.auth-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.auth-card select {
+  box-sizing: border-box;
   width: 100%;
+  max-width: 100%;
   appearance: none;
+  -webkit-appearance: none;
   border: 1px solid var(--border);
   background-color: var(--input);
   color: var(--foreground);
-  border-radius: var(--radius-md);
-  padding: 0.5rem 0.7rem;
+  border-radius: var(--control-radius);
   font: inherit;
-  line-height: 1.3;
+  font-size: 13px;
+  line-height: 1.25;
   box-shadow: var(--shadow-sm);
   transition:
     border-color 120ms ease,
     box-shadow 120ms ease,
     background-color 120ms ease;
+}
+
+/* Single-line controls share --control-height with .btn / .menu-btn */
+input.control,
+select.control,
+.field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.field select,
+.toolbar-input,
+.toolbar-select,
+.issue-fields-grid select,
+.quick-filters select,
+.composer select,
+.sidebar select,
+.nav-drawer select,
+.topbar input.control,
+.topbar .toolbar-input,
+.form-panel
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.form-panel select,
+.form-row input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.form-row select,
+.control-field
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.control-field select,
+.issue-detail-section
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.issue-detail-section select,
+.issue-modal
+  input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.issue-modal select,
+.auth-card input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]),
+.auth-card select {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  max-height: var(--control-height);
+  padding: 0 var(--control-px);
+  flex: 0 0 auto;
+  align-self: auto;
+  field-sizing: fixed;
 }
 
 select.control,
@@ -601,7 +763,13 @@ select.control,
 .quick-filters select,
 .composer select,
 .sidebar select,
-.nav-drawer select {
+.nav-drawer select,
+.form-panel select,
+.form-row select,
+.control-field select,
+.issue-detail-section select,
+.issue-modal select,
+.auth-card select {
   background-image:
     linear-gradient(45deg, transparent 50%, var(--muted-foreground) 50%),
     linear-gradient(135deg, var(--muted-foreground) 50%, transparent 50%);
@@ -620,16 +788,67 @@ select.control,
 .composer select option,
 .quick-filters select option,
 .sidebar select option,
-.nav-drawer select option {
+.nav-drawer select option,
+.form-panel select option,
+.issue-detail-section select option {
   background-color: var(--input);
   color: var(--foreground);
 }
 
-.field textarea {
-  resize: vertical;
+textarea.control,
+.field textarea,
+.form-panel textarea,
+.control-field textarea,
+.issue-detail-section textarea,
+.issue-modal textarea,
+.auth-card textarea {
+  height: auto;
   min-height: 5rem;
+  max-height: none;
+  resize: vertical;
   background-image: none;
-  padding-right: 0.7rem;
+  padding: 0.5rem var(--control-px);
+  flex: none;
+  align-self: auto;
+  line-height: 1.4;
+  field-sizing: content;
+}
+
+/* Keep date/time/number internals from blowing past the shared height */
+input.control[type="date"],
+input.control[type="datetime-local"],
+input.control[type="time"],
+input.control[type="month"],
+input.control[type="week"],
+input.control[type="number"],
+.form-panel input[type="date"],
+.form-panel input[type="number"],
+.control-field input[type="date"],
+.control-field input[type="number"],
+.issue-detail-section input[type="date"],
+.issue-detail-section input[type="number"] {
+  display: inline-flex;
+  align-items: center;
+}
+
+input[type="date"]::-webkit-datetime-edit,
+input[type="datetime-local"]::-webkit-datetime-edit,
+input[type="time"]::-webkit-datetime-edit {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  height: 100%;
+}
+
+input[type="file"].control,
+.form-panel input[type="file"],
+.issue-detail-section input[type="file"] {
+  height: var(--control-height);
+  min-height: var(--control-height);
+  max-height: var(--control-height);
+  padding: 0.2rem var(--control-px);
+  display: inline-flex;
+  align-items: center;
 }
 
 .control:hover,
@@ -693,12 +912,13 @@ select.control,
   display: flex;
   flex-wrap: wrap;
   gap: 0.65rem 0.75rem;
-  align-items: end;
+  align-items: flex-end;
 }
 
 .control-field {
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
   gap: 0.28rem;
   min-width: 0;
   flex: 1 1 8.5rem;
@@ -721,19 +941,21 @@ select.control,
 
 .control-field .control,
 .control-field select.control,
-.control-field input.control {
+.control-field input.control,
+.control-field .toolbar-input {
   width: 100%;
   min-width: 0;
+  /* Prevent nested flex rules from stretching single-line controls vertically */
+  flex: 0 0 auto;
 }
 
 .composer {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.5rem;
+  gap: 0.5rem 0.65rem;
   align-items: end;
 }
 
-.composer .toolbar-input,
 .composer .control-field.grow,
 .composer .control-field.span-2 {
   grid-column: 1 / -1;
@@ -741,37 +963,47 @@ select.control,
 
 .composer button[type="submit"] {
   grid-column: 1 / -1;
+  justify-self: stretch;
 }
 
 @media (min-width: 720px) {
   .composer {
     display: flex;
     flex-wrap: wrap;
-    align-items: end;
+    align-items: flex-end;
   }
 
-  .composer .toolbar-input,
+  /* Only the field wrapper grows horizontally — never the input itself. */
+  .composer .control-field {
+    flex: 0 1 auto;
+    min-width: 7.5rem;
+  }
+
   .composer .control-field.grow {
     flex: 1 1 14rem;
-    width: auto;
     min-width: 12rem;
     grid-column: auto;
   }
 
-  .composer .control-field {
-    flex: 0 0 auto;
-  }
-
-  .composer select,
-  .composer .control {
-    width: auto;
-    min-width: 7.5rem;
-  }
-
-  .composer button {
-    flex: 0 0 auto;
-    width: auto;
+  .composer .control-field.span-2 {
+    flex: 1 1 100%;
     grid-column: auto;
+  }
+
+  .composer select.control,
+  .composer input.control,
+  .composer .toolbar-input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .composer button[type="submit"] {
+    flex: 0 0 auto;
+    width: auto;
+    justify-self: auto;
+    grid-column: auto;
+    align-self: flex-end;
+    margin-bottom: 0;
   }
 }
 
@@ -882,6 +1114,14 @@ select.control,
 .toolbar-select {
   width: auto;
   min-width: 10rem;
+  max-width: 100%;
+}
+
+/* Keep action buttons on the control baseline in mixed rows */
+.form-row > .btn,
+.composer > .btn,
+.issue-detail-section .form-row > .btn {
+  align-self: flex-end;
 }
 
 .issue-modal-footer {

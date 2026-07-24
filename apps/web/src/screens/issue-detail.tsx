@@ -682,31 +682,39 @@ export function IssueDetailPanel(props: {
                 );
               })}
             </ul>
-            <div class="mt-2 flex flex-wrap gap-2">
-              <select
-                data-testid="link-type"
-                value={linkType}
-                onChange={(e: any) => setLinkType(e.currentTarget.value)}
-              >
-                <option value="relates_to">relates to</option>
-                <option value="blocks">blocks</option>
-                <option value="is_blocked_by">is blocked by</option>
-                <option value="duplicates">duplicates</option>
-              </select>
-              <select
-                data-testid="link-target"
-                value={linkTargetId}
-                onChange={(e: any) => setLinkTargetId(e.currentTarget.value)}
-              >
-                <option value="">Select issue</option>
-                {allIssues
-                  .filter((i) => i.id !== props.issue.id)
-                  .map((i) => (
-                    <option key={i.id} value={i.id}>
-                      {i.key} · {i.title}
-                    </option>
-                  ))}
-              </select>
+            <div class="mt-2 form-row">
+              <label class="control-field">
+                <span class="control-label">Type</span>
+                <select
+                  class="control"
+                  data-testid="link-type"
+                  value={linkType}
+                  onChange={(e: any) => setLinkType(e.currentTarget.value)}
+                >
+                  <option value="relates_to">relates to</option>
+                  <option value="blocks">blocks</option>
+                  <option value="is_blocked_by">is blocked by</option>
+                  <option value="duplicates">duplicates</option>
+                </select>
+              </label>
+              <label class="control-field grow">
+                <span class="control-label">Issue</span>
+                <select
+                  class="control"
+                  data-testid="link-target"
+                  value={linkTargetId}
+                  onChange={(e: any) => setLinkTargetId(e.currentTarget.value)}
+                >
+                  <option value="">Select issue</option>
+                  {allIssues
+                    .filter((i) => i.id !== props.issue.id)
+                    .map((i) => (
+                      <option key={i.id} value={i.id}>
+                        {i.key} · {i.title}
+                      </option>
+                    ))}
+                </select>
+              </label>
               <button
                 class={buttonVariants.secondary}
                 type="button"
@@ -771,9 +779,10 @@ export function IssueDetailPanel(props: {
                 </li>
               ))}
             </ul>
-            <label class="mt-2 block text-sm">
-              <span class="sr-only">Upload</span>
+            <label class="control-field mt-2">
+              <span class="control-label">Upload</span>
               <input
+                class="control"
                 type="file"
                 data-testid="attachment-upload"
                 onChange={(e: any) => {
